@@ -1,14 +1,19 @@
 extends Control
 
 signal back_to_menu
+signal request_deploy_mode(aircraft_id: String)
 
 var _player_state: Node = null
+var _game_world: Node = null
 
 @onready var _balance_label: Label = $MarginContainer/VBox/TopBar/BalanceLabel
 @onready var _aircraft_list: VBoxContainer = $MarginContainer/VBox/ScrollContainer/AircraftList
 
 func set_player_state(player_state: Node) -> void:
 	_player_state = player_state
+
+func set_game_world(game_world: Node) -> void:
+	_game_world = game_world
 
 func _ready() -> void:
 	$MarginContainer/VBox/BackButton.pressed.connect(_on_back_pressed)
@@ -38,6 +43,8 @@ func _refresh_aircraft_list() -> void:
 		return
 	var instances: Array = _player_state.get_aircraft_instances()
 	for ac in instances:
+		if str(ac.get("status", "")) != "stored":
+			continue
 		var row := _make_aircraft_row(ac)
 		_aircraft_list.add_child(row)
 
@@ -55,6 +62,15 @@ func _make_aircraft_row(ac: Dictionary) -> Control:
 	info_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.add_child(info_label)
 
+	var deploy_btn := Button.new()
+	deploy_btn.text = "Deploy"
+	deploy_btn.add_theme_font_size_override("font_size", 14)
+	var can_deploy: bool = (status == "stored")
+	deploy_btn.disabled = !can_deploy
+	if can_deploy and _game_world != null:
+		deploy_btn.pressed.connect(_on_deploy_pressed.bind(ac_id))
+	hbox.add_child(deploy_btn)
+
 	var sell_btn := Button.new()
 	sell_btn.text = "卖出"
 	sell_btn.add_theme_font_size_override("font_size", 14)
@@ -65,6 +81,11 @@ func _make_aircraft_row(ac: Dictionary) -> Control:
 	hbox.add_child(sell_btn)
 
 	return hbox
+
+func _on_deploy_pressed(aircraft_id: String) -> void:
+	if _game_world == null:
+		return
+	request_deploy_mode.emit(aircraft_id)
 
 func _on_sell_pressed(aircraft_id: String) -> void:
 	if _player_state == null:

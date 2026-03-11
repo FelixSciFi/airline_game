@@ -4,12 +4,14 @@ extends Node
 
 const INITIAL_BALANCE := 100000
 const AIRCRAFT_STATUS_STORED := "stored"
+const AIRCRAFT_STATUS_GROUNDED := "grounded"
+const AIRCRAFT_STATUS_IN_FLIGHT := "in_flight"
 const ID_FORMAT := "plane_%03d"
 const AIRCRAFT_MODELS_PATH := "res://data/aircraft_models.json"
 const SELL_RATIO := 0.8
 
 var balance: int = INITIAL_BALANCE
-var aircraft_instances: Array = []  # 元素: { id, model_id, status }
+var aircraft_instances: Array = []  # 元素: { id, model_id, status, current_city_id }
 var finance_logs: Array = []       # 元素: { amount, type, desc }，新记录插在最前
 var _models_by_id: Dictionary = {}
 var _next_aircraft_index: int = 1
@@ -58,7 +60,8 @@ func purchase_aircraft(model_id: String, price: int) -> bool:
 	aircraft_instances.append({
 		"id": new_id,
 		"model_id": model_id,
-		"status": AIRCRAFT_STATUS_STORED
+		"status": AIRCRAFT_STATUS_STORED,
+		"current_city_id": null
 	})
 	add_finance_log(-price, "buy_aircraft", "购买飞机 %s %s" % [model_name, new_id])
 	return true
