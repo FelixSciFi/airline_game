@@ -1,0 +1,29 @@
+[
+  {
+    "id": "small_a",
+    "name": "小型客机 A",
+    "price": 20000,
+    "speed": 6,
+    "capacity": 6,
+    "max_range": 400,
+    "fuel_rate": 1.0
+  },
+  {
+    "id": "medium_b",
+    "name": "中型客机 B",
+    "price": 40000,
+    "speed": 5,
+    "capacity": 12,
+    "max_range": 700,
+    "fuel_rate": 1.4
+  },
+  {
+    "id": "large_c",
+    "name": "大型客机 C",
+    "price": 70000,
+    "speed": 4,
+    "capacity": 20,
+    "max_range": 1000,
+    "fuel_rate": 2.0
+  }
+]

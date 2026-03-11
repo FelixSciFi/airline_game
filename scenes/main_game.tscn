@@ -1,0 +1,13 @@
+[gd_scene load_steps=4 format=3 uid="uid://main_game_001"]
+
+[ext_resource type="Script" path="res://scenes/main_game.gd" id="1_main_game"]
+[ext_resource type="PackedScene" uid="uid://world_map_001" path="res://ui/world_map.tscn" id="2_world_map"]
+[ext_resource type="Script" path="res://state/player_state.gd" id="3_player_state"]
+
+[node name="MainGame" type="Node2D"]
+script = ExtResource("1_main_game")
+
+[node name="PlayerState" type="Node" parent="."]
+script = ExtResource("3_player_state")
+
+[node name="WorldMap" parent="." instance=ExtResource("2_world_map")]
