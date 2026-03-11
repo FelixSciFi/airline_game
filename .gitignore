@@ -1,3 +1,16 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+# Godot cache
+.godot/
+.import/
+.export/
+
+# Godot export settings
+.export_presets.cfg
+
+# MacOS
+.DS_Store
+
+# logs
+*.log
