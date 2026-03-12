@@ -1,7 +1,66 @@
 [
-  { "id": "baotou", "name": "Baotou", "x": 300, "y": 300 },
-  { "id": "beijing", "name": "Beijing", "x": 500, "y": 200 },
-  { "id": "shanghai", "name": "Shanghai", "x": 650, "y": 350 },
-  { "id": "guangzhou", "name": "Guangzhou", "x": 550, "y": 500 },
-  { "id": "chengdu", "name": "Chengdu", "x": 350, "y": 350 }
+  {
+    "id": "chicago",
+    "name": "Chicago",
+    "region": "north_america",
+    "x": 1027,
+    "y": 535
+  },
+  {
+    "id": "new_york",
+    "name": "New York",
+    "region": "north_america",
+    "x": 1178,
+    "y": 548
+  },
+  {
+    "id": "london",
+    "name": "London",
+    "region": "western_europe",
+    "x": 1999,
+    "y": 428
+  },
+  {
+    "id": "paris",
+    "name": "Paris",
+    "region": "western_europe",
+    "x": 2026,
+    "y": 457
+  },
+  {
+    "id": "vienna",
+    "name": "Vienna",
+    "region": "eastern_europe",
+    "x": 2182,
+    "y": 464
+  },
+  {
+    "id": "dubai",
+    "name": "Dubai",
+    "region": "middle_east",
+    "x": 2614,
+    "y": 720
+  },
+  {
+    "id": "baotou",
+    "name": "Baotou",
+    "region": "east_asia",
+    "x": 3220,
+    "y": 548
+  },
+  {
+    "id": "beijing",
+    "name": "Beijing",
+    "region": "east_asia",
+    "x": 3293,
+    "y": 557
+  },
+  {
+    "id": "tokyo",
+    "name": "Tokyo",
+    "region": "east_asia",
+    "x": 3552,
+    "y": 603
+  }
 ]
+

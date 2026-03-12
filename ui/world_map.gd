@@ -1,6 +1,7 @@
 extends Control
 
 const AircraftDeploySystem = preload("res://systems/aircraft_deploy_system.gd")
+const WORLD_MAP_TEXTURE := preload("res://assets/map/world_map_v1.png")
 const DOT_SIZE := 10
 const LABEL_OFFSET := Vector2(12, -6)
 const AIRCRAFT_ICON_OFFSET := Vector2(-6, -6)
@@ -29,6 +30,8 @@ func _ready() -> void:
 	_map_view.name = "MapView"
 	add_child(_map_view)
 	_map_view.view_changed.connect(_on_map_view_changed)
+	$ColorRect.visible = false
+	queue_redraw()
 	_deploy_hint_label = Label.new()
 	_deploy_hint_label.name = "DeployHintLabel"
 	_deploy_hint_label.add_theme_font_size_override("font_size", 36)
@@ -183,8 +186,37 @@ func _input(event: InputEvent) -> void:
 func _on_map_view_changed() -> void:
 	_update_cities_screen_positions()
 	_update_aircraft_screen_positions()
+	queue_redraw()
 	var z: float = _map_view.get_zoom() if _map_view != null else 1.0
 	print("MAP REFRESH WITH ZOOM: ", z)
+
+func _draw() -> void:
+	if _map_view == null:
+		return
+	var view_size: Vector2 = _get_view_size()
+	var map_w: int = _map_view.get_map_width()
+	var map_h: int = _map_view.get_map_height()
+	var corners: PackedVector2Array = [
+		_map_view.world_to_screen(Vector2(0, 0), view_size),
+		_map_view.world_to_screen(Vector2(map_w, 0), view_size),
+		_map_view.world_to_screen(Vector2(map_w, map_h), view_size),
+		_map_view.world_to_screen(Vector2(0, map_h), view_size)
+	]
+	# 地图外部：整屏浅灰
+	draw_rect(Rect2(Vector2.ZERO, view_size), Color(0.45, 0.45, 0.48, 1))
+	# 地图内部：绘制世界地图底图（随视图平移和缩放）
+	if WORLD_MAP_TEXTURE != null:
+		var top_left: Vector2 = _map_view.world_to_screen(Vector2(0, 0), view_size)
+		var bottom_right: Vector2 = _map_view.world_to_screen(Vector2(map_w, map_h), view_size)
+		var rect_pos: Vector2 = top_left
+		var rect_size: Vector2 = bottom_right - top_left
+		draw_texture_rect(WORLD_MAP_TEXTURE, Rect2(rect_pos, rect_size), false)
+	else:
+		# 兜底：如果纹理缺失，仍然画一块深色矩形
+		draw_colored_polygon(corners, Color(0.35, 0.38, 0.42, 1))
+	# 地图边界：清晰边框
+	draw_polyline(corners, Color(1.0, 1.0, 1.0, 1.0))
+	draw_line(corners[3], corners[0], Color(1.0, 1.0, 1.0, 1.0))
 
 func _get_view_size() -> Vector2:
 	return get_viewport().get_visible_rect().size
