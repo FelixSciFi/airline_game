@@ -2,11 +2,12 @@ extends Control
 
 const AircraftDeploySystem = preload("res://systems/aircraft_deploy_system.gd")
 const WORLD_MAP_TEXTURE := preload("res://assets/map/world_map_v1.png")
-const DOT_SIZE := 16
+const DOT_SIZE := 32
 const LABEL_OFFSET := Vector2(12, -6)
 const AIRCRAFT_ICON_OFFSET := Vector2(-6, -6)
-const CITY_BUTTON_SIZE := 44
+const CITY_BUTTON_SIZE := 88
 const AIRCRAFT_STATUS_GROUNDED := "grounded"
+const DISTANCE_TIME_FACTOR := 1000.0
 
 var _cities_layer: Node2D
 var _aircraft_layer: Node2D
@@ -152,12 +153,27 @@ func _on_start_pressed() -> void:
 	var gs: Node = get_parent().get_node_or_null("GameState")
 	if gs == null:
 		return
+	var model_id: String = str(plane.get("model_id", ""))
+	var speed: int = _player_state.get_model_speed(model_id) if _player_state else 6
+	speed = maxi(speed, 1)
+	var origin_world: Vector2 = _get_city_world_pos(origin_city_id)
+	var dest_world: Vector2 = _get_city_world_pos(selected_city_id)
+	var map_w_dur: int = _map_view.get_map_width()
+	var dx: float = dest_world.x - origin_world.x
+	if dx > float(map_w_dur) / 2.0:
+		dx -= float(map_w_dur)
+	elif dx < -float(map_w_dur) / 2.0:
+		dx += float(map_w_dur)
+	var dy: float = dest_world.y - origin_world.y
+	var distance: float = sqrt(dx * dx + dy * dy)
+	var duration_ms: int = int(distance / float(speed) * DISTANCE_TIME_FACTOR)
+	duration_ms = maxi(duration_ms, 1000)
 	var flight: Dictionary = {
 		"plane_id": selecting_plane_id,
 		"origin": origin_city_id,
 		"destination": selected_city_id,
 		"start_time": Time.get_ticks_msec(),
-		"duration": 120000
+		"duration": duration_ms
 	}
 	gs.active_flights.append(flight)
 	print("FLIGHT CREATED:", selecting_plane_id, " ", origin_city_id, " → ", selected_city_id)
@@ -348,18 +364,30 @@ func _draw() -> void:
 		# 地图边界：清晰边框
 		draw_polyline(corners, Color(1.0, 1.0, 1.0, 1.0))
 		draw_line(corners[3], corners[0], Color(1.0, 1.0, 1.0, 1.0))
-	# 航线预览线：DESTINATION MODE 下 origin → selected
+	# 航线预览线：DESTINATION MODE 下 origin → selected（最短 wrap 路径）
 	if selecting_destination and origin_city_id != "" and selected_city_id != "":
 		var origin_world: Vector2 = _get_city_world_pos(origin_city_id)
 		var dest_world: Vector2 = _get_city_world_pos(selected_city_id)
-		var p1: Vector2 = _map_view.world_to_screen(origin_world, view_size)
-		var p2: Vector2 = _map_view.world_to_screen(dest_world, view_size)
+		var ox: float = origin_world.x
+		var dx_preview: float = dest_world.x - ox
+		var dest_x_adj: float = dest_world.x
+		if dx_preview > float(map_w) / 2.0:
+			dest_x_adj -= float(map_w)
+		elif dx_preview < -float(map_w) / 2.0:
+			dest_x_adj += float(map_w)
+		var adjusted_dest_world: Vector2 = Vector2(dest_x_adj, dest_world.y)
 		var line_color := Color(1.0, 1.0, 0.0, 0.9)
-		var dir: Vector2 = (p2 - p1).normalized()
-		var perp := Vector2(-dir.y, dir.x)
-		draw_line(p1 + perp, p2 + perp, line_color)
-		draw_line(p1, p2, line_color)
-		draw_line(p1 - perp, p2 - perp, line_color)
+		var line_offsets_x: Array = [0.0, -float(map_w), float(map_w)]
+		for line_off in line_offsets_x:
+			var o_off: Vector2 = origin_world + Vector2(line_off, 0.0)
+			var d_off: Vector2 = adjusted_dest_world + Vector2(line_off, 0.0)
+			var p1: Vector2 = _map_view.world_to_screen(o_off, view_size)
+			var p2: Vector2 = _map_view.world_to_screen(d_off, view_size)
+			var dir: Vector2 = (p2 - p1).normalized()
+			var perp := Vector2(-dir.y, dir.x)
+			draw_line(p1 + perp, p2 + perp, line_color)
+			draw_line(p1, p2, line_color)
+			draw_line(p1 - perp, p2 - perp, line_color)
 	# FlightManager：根据 GameState.active_flights 绘制飞行航线
 	var flights: Array = _get_active_flights()
 	var to_complete: Array = []
@@ -381,23 +409,55 @@ func _draw() -> void:
 			if progress >= 1.0:
 				to_complete.append(flight)
 				continue
-			var fp1: Vector2 = _map_view.world_to_screen(origin_world_f, view_size)
-			var fp2: Vector2 = _map_view.world_to_screen(dest_world_f, view_size)
-			draw_line(fp1, fp2, Color(0.7, 0.8, 1.0, 0.9), 2.0)
+			var dest_x_line: float = dest_world_f.x
+			var dx_line: float = dest_x_line - origin_world_f.x
+			if dx_line > float(map_w) / 2.0:
+				dest_x_line -= float(map_w)
+			elif dx_line < -float(map_w) / 2.0:
+				dest_x_line += float(map_w)
+			var adjusted_dest_line: Vector2 = Vector2(dest_x_line, dest_world_f.y)
+			var flight_line_offsets: Array = [0.0, -float(map_w), float(map_w)]
+			for line_off in flight_line_offsets:
+				var o_off: Vector2 = origin_world_f + Vector2(line_off, 0.0)
+				var d_off: Vector2 = adjusted_dest_line + Vector2(line_off, 0.0)
+				var fp1: Vector2 = _map_view.world_to_screen(o_off, view_size)
+				var fp2: Vector2 = _map_view.world_to_screen(d_off, view_size)
+				draw_line(fp1, fp2, Color(0.7, 0.8, 1.0, 0.9), 2.0)
 
-			var plane_world: Vector2 = origin_world_f.lerp(dest_world_f, progress)
-			var plane_screen: Vector2 = _map_view.world_to_screen(plane_world, view_size)
-
-			var dir_f: Vector2 = (dest_world_f - origin_world_f).normalized()
+			var origin_x: float = origin_world_f.x
+			var origin_y: float = origin_world_f.y
+			var dest_x: float = dest_world_f.x
+			var dest_y: float = dest_world_f.y
+			var dx: float = dest_x - origin_x
+			if dx > float(map_w) / 2.0:
+				dest_x -= float(map_w)
+			elif dx < -float(map_w) / 2.0:
+				dest_x += float(map_w)
+			var plane_x: float = lerpf(origin_x, dest_x, progress)
+			var plane_y: float = lerpf(origin_y, dest_y, progress)
+			if plane_x < 0.0:
+				plane_x += float(map_w)
+			if plane_x >= float(map_w):
+				plane_x -= float(map_w)
+			var plane_world: Vector2 = Vector2(plane_x, plane_y)
+			var plane_offsets_x: Array = [0.0, -float(map_w), float(map_w)]
+			var dest_adj_screen: Vector2 = _map_view.world_to_screen(Vector2(dest_x, dest_y), view_size)
+			var one_screen: Vector2 = _map_view.world_to_screen(plane_world, view_size)
+			var dir_f: Vector2 = (dest_adj_screen - one_screen).normalized()
+			if dir_f.length() < 0.0001:
+				dir_f = Vector2(1, 0)
 			if dir_f.length() == 0.0:
 				continue
 			var perp_f := Vector2(-dir_f.y, dir_f.x)
-			var size: float = 6.0
-			var nose: Vector2 = plane_screen + dir_f * size
-			var left: Vector2 = plane_screen - dir_f * size * 0.3 + perp_f * size * 0.6
-			var right: Vector2 = plane_screen - dir_f * size * 0.3 - perp_f * size * 0.6
-			var tri := PackedVector2Array([nose, left, right])
-			draw_colored_polygon(tri, Color(1, 1, 1, 1))
+			var size: float = 36.0
+			for offset_x in plane_offsets_x:
+				var pw: Vector2 = Vector2(plane_x + offset_x, plane_y)
+				var ps: Vector2 = _map_view.world_to_screen(pw, view_size)
+				var nose: Vector2 = ps + dir_f * size
+				var left: Vector2 = ps - dir_f * size * 0.3 + perp_f * size * 0.6
+				var right: Vector2 = ps - dir_f * size * 0.3 - perp_f * size * 0.6
+				var tri := PackedVector2Array([nose, left, right])
+				draw_colored_polygon(tri, Color(1, 1, 1, 1))
 		for f in to_complete:
 			_complete_flight(f)
 
@@ -485,10 +545,10 @@ func _update_cities_screen_positions() -> void:
 		var dot_color := Color(0.9, 0.3, 0.2, 1)
 		if selecting_destination:
 			if city_id == selected_city_id:
-				dot_radius = 8.0
+				dot_radius = 16.0
 				dot_color = Color.YELLOW
 			else:
-				dot_radius = 6.0
+				dot_radius = 12.0
 				dot_color = Color.RED
 		var dot_size: float = dot_radius * 2.0
 		for offset_x in offsets_x:
@@ -524,7 +584,7 @@ func set_aircraft(aircraft_instances: Array) -> void:
 		var screen: Vector2 = _map_view.world_to_screen(Vector2(wx, wy), view_size)
 		var icon := Label.new()
 		icon.text = "✈"
-		icon.add_theme_font_size_override("font_size", 36)
+		icon.add_theme_font_size_override("font_size", 72)
 		icon.set_position(screen + AIRCRAFT_ICON_OFFSET)
 		icon.set_meta("city_id", city_id)
 		_aircraft_layer.add_child(icon)

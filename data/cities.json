@@ -61,6 +61,20 @@
     "region": "east_asia",
     "x": 3552,
     "y": 603
+  },
+  {
+    "id": "gibraltar",
+    "name": "Gibraltar",
+    "region": "western_europe",
+    "x": 1910,
+    "y": 660
+  },
+  {
+    "id": "taipei",
+    "name": "Taipei",
+    "region": "east_asia",
+    "x": 3290,
+    "y": 780
   }
 ]
 

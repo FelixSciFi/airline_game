@@ -32,7 +32,11 @@ func _load_models() -> void:
 	if data is Array:
 		for m in data:
 			var mid := str(m.get("id", ""))
-			_models_by_id[mid] = {"name": str(m.get("name", "")), "price": int(m.get("price", 0))}
+			_models_by_id[mid] = {
+				"name": str(m.get("name", "")),
+				"price": int(m.get("price", 0)),
+				"speed": int(m.get("speed", 1))
+			}
 
 func get_balance() -> int:
 	return balance
@@ -43,6 +47,10 @@ func get_aircraft_instances() -> Array:
 func get_model_name(model_id: String) -> String:
 	var info = _models_by_id.get(model_id, {})
 	return str(info.get("name", model_id))
+
+func get_model_speed(model_id: String) -> int:
+	var info = _models_by_id.get(model_id, {})
+	return int(info.get("speed", 1))
 
 func get_finance_logs() -> Array:
 	return finance_logs

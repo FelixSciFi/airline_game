@@ -3,7 +3,7 @@
     "id": "small_a",
     "name": "小型客机 A",
     "price": 20000,
-    "speed": 6,
+    "speed": 60,
     "capacity": 6,
     "max_range": 400,
     "fuel_rate": 1.0

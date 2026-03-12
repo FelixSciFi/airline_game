@@ -55,9 +55,10 @@ func _make_aircraft_row(ac: Dictionary) -> Control:
 	var model_id := str(ac.get("model_id", ""))
 	var status := str(ac.get("status", ""))
 	var model_name: String = _player_state.get_model_name(model_id) if _player_state else model_id
+	var speed: int = _player_state.get_model_speed(model_id) if _player_state else 0
 
 	var info_label := Label.new()
-	info_label.text = "%s | %s | %s" % [ac_id, model_name, status]
+	info_label.text = "%s | %s | %s | 速度:%d" % [ac_id, model_name, status, speed]
 	info_label.add_theme_font_size_override("font_size", 36)
 	info_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.add_child(info_label)
