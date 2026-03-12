@@ -10,6 +10,7 @@ const AIRCRAFT_STATUS_GROUNDED := "grounded"
 var _cities_layer: Node2D
 var _aircraft_layer: Node2D
 var _cities: Array = []
+var _map_view: Node = null
 var _player_state: Node = null
 var _main_menu_panel: Control
 var _bill_panel: Control
@@ -24,6 +25,10 @@ func _ready() -> void:
 	_aircraft_layer = Node2D.new()
 	_aircraft_layer.name = "AircraftLayer"
 	add_child(_aircraft_layer)
+	_map_view = preload("res://ui/map/map_view.gd").new()
+	_map_view.name = "MapView"
+	add_child(_map_view)
+	_map_view.view_changed.connect(_on_map_view_changed)
 	_deploy_hint_label = Label.new()
 	_deploy_hint_label.name = "DeployHintLabel"
 	_deploy_hint_label.add_theme_font_size_override("font_size", 36)
@@ -155,42 +160,93 @@ func _on_city_pressed(city_id: String) -> void:
 	_airport_panel.set_airport_city(city_id)
 	_airport_panel.visible = true
 
+func _input(event: InputEvent) -> void:
+	if _map_view == null:
+		return
+	# 鼠标滚轮
+	if event is InputEventMouseButton:
+		var mb: InputEventMouseButton = event
+		if mb.pressed:
+			if mb.button_index == MOUSE_BUTTON_WHEEL_UP:
+				_map_view.zoom_in()
+				print("WHEEL ZOOM: zoom=", _map_view.get_zoom())
+			elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				_map_view.zoom_out()
+				print("WHEEL ZOOM: zoom=", _map_view.get_zoom())
+	# Mac 触控板双指缩放手势
+	elif event is InputEventMagnifyGesture:
+		var mg: InputEventMagnifyGesture = event
+		var factor: float = mg.factor
+		_map_view.zoom_by_factor(factor)
+		print("GESTURE ZOOM: factor=", factor, " zoom=", _map_view.get_zoom())
+
+func _on_map_view_changed() -> void:
+	_update_cities_screen_positions()
+	_update_aircraft_screen_positions()
+	var z: float = _map_view.get_zoom() if _map_view != null else 1.0
+	print("MAP REFRESH WITH ZOOM: ", z)
+
+func _get_view_size() -> Vector2:
+	return get_viewport().get_visible_rect().size
+
 func set_cities(cities: Array) -> void:
 	_cities = cities
 	for child in _cities_layer.get_children():
 		child.queue_free()
-
+	if _map_view == null:
+		return
+	var view_size := _get_view_size()
 	for city in cities:
-		var x: float = float(city.get("x", 0))
-		var y: float = float(city.get("y", 0))
+		var wx: float = float(city.get("x", 0))
+		var wy: float = float(city.get("y", 0))
+		var world_pos := Vector2(wx, wy)
+		var screen: Vector2 = _map_view.world_to_screen(world_pos, view_size)
 		var name_str: String = str(city.get("name", ""))
 		var city_id: String = str(city.get("id", ""))
 
-		# Dot (small ColorRect)
 		var dot := ColorRect.new()
 		dot.color = Color(0.9, 0.3, 0.2, 1)
-		dot.set_position(Vector2(x - DOT_SIZE / 2.0, y - DOT_SIZE / 2.0))
+		dot.set_position(Vector2(screen.x - DOT_SIZE / 2.0, screen.y - DOT_SIZE / 2.0))
 		dot.set_size(Vector2(DOT_SIZE, DOT_SIZE))
 		_cities_layer.add_child(dot)
 
-		# Label with city name（动态创建的 Label，显式设字号才可读）
 		var label := Label.new()
 		label.text = name_str
 		label.add_theme_font_size_override("font_size", 36)
-		label.set_position(Vector2(x, y) + LABEL_OFFSET)
+		label.set_position(screen + LABEL_OFFSET)
 		_cities_layer.add_child(label)
 
-		# Clickable area for deploy mode (covers city dot)
 		var btn := Button.new()
 		btn.flat = true
-		btn.set_position(Vector2(x - CITY_BUTTON_SIZE / 2.0, y - CITY_BUTTON_SIZE / 2.0))
+		btn.set_position(Vector2(screen.x - CITY_BUTTON_SIZE / 2.0, screen.y - CITY_BUTTON_SIZE / 2.0))
 		btn.set_size(Vector2(CITY_BUTTON_SIZE, CITY_BUTTON_SIZE))
 		btn.pressed.connect(_on_city_pressed.bind(city_id))
 		_cities_layer.add_child(btn)
 
+func _update_cities_screen_positions() -> void:
+	if _map_view == null or _cities.is_empty():
+		return
+	var view_size := _get_view_size()
+	var idx := 0
+	for city in _cities:
+		var wx: float = float(city.get("x", 0))
+		var wy: float = float(city.get("y", 0))
+		var screen: Vector2 = _map_view.world_to_screen(Vector2(wx, wy), view_size)
+		var dot := _cities_layer.get_child(idx)
+		var label := _cities_layer.get_child(idx + 1)
+		var btn := _cities_layer.get_child(idx + 2)
+		dot.set_position(Vector2(screen.x - DOT_SIZE / 2.0, screen.y - DOT_SIZE / 2.0))
+		label.set_position(screen + LABEL_OFFSET)
+		btn.set_position(Vector2(screen.x - CITY_BUTTON_SIZE / 2.0, screen.y - CITY_BUTTON_SIZE / 2.0))
+		btn.set_size(Vector2(CITY_BUTTON_SIZE, CITY_BUTTON_SIZE))
+		idx += 3
+
 func set_aircraft(aircraft_instances: Array) -> void:
 	for child in _aircraft_layer.get_children():
 		child.queue_free()
+	if _map_view == null:
+		return
+	var view_size := _get_view_size()
 	for ac in aircraft_instances:
 		if str(ac.get("status", "")) != AIRCRAFT_STATUS_GROUNDED:
 			continue
@@ -200,13 +256,31 @@ func set_aircraft(aircraft_instances: Array) -> void:
 		var city := _find_city_by_id(city_id)
 		if city.is_empty():
 			continue
-		var x: float = float(city.get("x", 0))
-		var y: float = float(city.get("y", 0))
+		var wx: float = float(city.get("x", 0))
+		var wy: float = float(city.get("y", 0))
+		var screen: Vector2 = _map_view.world_to_screen(Vector2(wx, wy), view_size)
 		var icon := Label.new()
 		icon.text = "✈"
 		icon.add_theme_font_size_override("font_size", 36)
-		icon.set_position(Vector2(x, y) + AIRCRAFT_ICON_OFFSET)
+		icon.set_position(screen + AIRCRAFT_ICON_OFFSET)
+		icon.set_meta("city_id", city_id)
 		_aircraft_layer.add_child(icon)
+
+func _update_aircraft_screen_positions() -> void:
+	if _map_view == null or _player_state == null:
+		return
+	var view_size := _get_view_size()
+	for child in _aircraft_layer.get_children():
+		var city_id = child.get_meta("city_id", null)
+		if city_id == null:
+			continue
+		var city := _find_city_by_id(city_id)
+		if city.is_empty():
+			continue
+		var wx: float = float(city.get("x", 0))
+		var wy: float = float(city.get("y", 0))
+		var screen: Vector2 = _map_view.world_to_screen(Vector2(wx, wy), view_size)
+		child.set_position(screen + AIRCRAFT_ICON_OFFSET)
 
 func _find_city_by_id(city_id) -> Dictionary:
 	for city in _cities:
