@@ -12,7 +12,7 @@ const MAP_HEIGHT := 2000
 var view_center: Vector2 = Vector2(500, 350)
 var zoom: float = 1.0
 var min_zoom: float = 0.5
-var max_zoom: float = 2.5
+var max_zoom: float = 5.0
 var _dragging := false
 
 func _ready() -> void:
@@ -61,6 +61,11 @@ func _input(event: InputEvent) -> void:
 		elif bottom_y < frame_bottom_y:
 			new_center.y = float(MAP_HEIGHT) - view_size.y / (2.0 * zoom)
 		view_center = new_center
+		# X 方向 wrap：视角中心保持在 [0, MAP_WIDTH)
+		while view_center.x < 0.0:
+			view_center.x += float(MAP_WIDTH)
+		while view_center.x >= float(MAP_WIDTH):
+			view_center.x -= float(MAP_WIDTH)
 		view_changed.emit()
 
 func world_to_screen(world_pos: Vector2, view_size: Vector2) -> Vector2:

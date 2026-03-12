@@ -82,6 +82,12 @@ func _make_aircraft_row(ac: Dictionary, player_state: Node) -> Control:
 	recall_btn.pressed.connect(_on_recall_pressed.bind(ac_id))
 	hbox.add_child(recall_btn)
 
+	var depart_btn := Button.new()
+	depart_btn.text = "出发"
+	depart_btn.add_theme_font_size_override("font_size", 44)
+	depart_btn.pressed.connect(_on_depart_pressed.bind(ac_id))
+	hbox.add_child(depart_btn)
+
 	return hbox
 
 func _on_recall_pressed(aircraft_id: String) -> void:
@@ -90,6 +96,12 @@ func _on_recall_pressed(aircraft_id: String) -> void:
 	if AircraftRecallSystem.recall_aircraft(_game_world, aircraft_id):
 		_refresh_aircraft_list()
 		aircraft_recalled.emit()
+
+func _on_depart_pressed(aircraft_id: String) -> void:
+	var wm: Node = get_parent()
+	if wm != null and wm.has_method("enter_destination_select_mode"):
+		wm.enter_destination_select_mode(aircraft_id)
+	back_to_map.emit()
 
 func _on_back_pressed() -> void:
 	back_to_map.emit()
