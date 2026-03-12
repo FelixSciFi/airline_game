@@ -56,13 +56,13 @@ func _make_model_card(model: Dictionary) -> Control:
 
 	var name_label := Label.new()
 	name_label.text = str(model.get("name", ""))
-	name_label.add_theme_font_size_override("font_size", 18)
+	name_label.add_theme_font_size_override("font_size", 36)
 	vbox.add_child(name_label)
 
 	var price := int(model.get("price", 0))
 	var price_label := Label.new()
 	price_label.text = "价格: %d" % price
-	price_label.add_theme_font_size_override("font_size", 14)
+	price_label.add_theme_font_size_override("font_size", 36)
 	vbox.add_child(price_label)
 
 	var stats := "速度:%d 容量:%d 航程:%d 油耗:%.1f" % [
@@ -73,11 +73,12 @@ func _make_model_card(model: Dictionary) -> Control:
 	]
 	var stats_label := Label.new()
 	stats_label.text = stats
-	stats_label.add_theme_font_size_override("font_size", 12)
+	stats_label.add_theme_font_size_override("font_size", 36)
 	vbox.add_child(stats_label)
 
 	var buy_btn := Button.new()
 	buy_btn.text = "购买"
+	buy_btn.add_theme_font_size_override("font_size", 44)
 	buy_btn.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	var model_id := str(model.get("id", ""))
 	buy_btn.pressed.connect(_on_buy_pressed.bind(model_id, price))

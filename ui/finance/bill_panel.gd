@@ -40,7 +40,7 @@ func _refresh_display() -> void:
 		var line := "%s%d %s" % [prefix, amount, desc]
 		var label := Label.new()
 		label.text = line
-		label.add_theme_font_size_override("font_size", 16)
+		label.add_theme_font_size_override("font_size", 36)
 		_logs_container.add_child(label)
 
 func _on_back_pressed() -> void:

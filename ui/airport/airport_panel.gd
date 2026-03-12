@@ -72,13 +72,13 @@ func _make_aircraft_row(ac: Dictionary, player_state: Node) -> Control:
 
 	var info_label := Label.new()
 	info_label.text = "%s | %s | %s" % [ac_id, model_name, status]
-	info_label.add_theme_font_size_override("font_size", 14)
+	info_label.add_theme_font_size_override("font_size", 36)
 	info_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.add_child(info_label)
 
 	var recall_btn := Button.new()
 	recall_btn.text = "送回机库"
-	recall_btn.add_theme_font_size_override("font_size", 14)
+	recall_btn.add_theme_font_size_override("font_size", 44)
 	recall_btn.pressed.connect(_on_recall_pressed.bind(ac_id))
 	hbox.add_child(recall_btn)
 

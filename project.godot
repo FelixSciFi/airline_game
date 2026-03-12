@@ -15,6 +15,17 @@ run/main_scene="res://scenes/main_game.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
+[display]
+
+window/size/viewport_width=1290
+window/size/viewport_height=2796
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[gui]
+
+theme/custom="res://ui/theme/game_theme.tres"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

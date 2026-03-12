@@ -26,7 +26,7 @@ func _ready() -> void:
 	add_child(_aircraft_layer)
 	_deploy_hint_label = Label.new()
 	_deploy_hint_label.name = "DeployHintLabel"
-	_deploy_hint_label.add_theme_font_size_override("font_size", 18)
+	_deploy_hint_label.add_theme_font_size_override("font_size", 36)
 	_deploy_hint_label.visible = false
 	add_child(_deploy_hint_label)
 	# Ensure we fill the viewport when parent is Node2D（延后设置避免与 anchor 冲突）
@@ -141,13 +141,15 @@ func _on_city_pressed(city_id: String) -> void:
 	if game_world == null:
 		return
 	if not _pending_deploy_aircraft_id.is_empty():
-		# 部署模式：完成部署
+		# 部署模式：完成部署后自动打开该城市机场界面
 		if AircraftDeploySystem.deploy_aircraft(game_world, _pending_deploy_aircraft_id, city_id):
 			_pending_deploy_aircraft_id = ""
 			if _deploy_hint_label != null:
 				_deploy_hint_label.visible = false
 			if _player_state != null:
 				set_aircraft(_player_state.get_aircraft_instances())
+			_airport_panel.set_airport_city(city_id)
+			_airport_panel.visible = true
 		return
 	# 正常模式：打开该城市机场界面
 	_airport_panel.set_airport_city(city_id)
@@ -171,10 +173,10 @@ func set_cities(cities: Array) -> void:
 		dot.set_size(Vector2(DOT_SIZE, DOT_SIZE))
 		_cities_layer.add_child(dot)
 
-		# Label with city name
+		# Label with city name（动态创建的 Label，显式设字号才可读）
 		var label := Label.new()
 		label.text = name_str
-		label.add_theme_font_size_override("font_size", 14)
+		label.add_theme_font_size_override("font_size", 36)
 		label.set_position(Vector2(x, y) + LABEL_OFFSET)
 		_cities_layer.add_child(label)
 
@@ -202,7 +204,7 @@ func set_aircraft(aircraft_instances: Array) -> void:
 		var y: float = float(city.get("y", 0))
 		var icon := Label.new()
 		icon.text = "✈"
-		icon.add_theme_font_size_override("font_size", 14)
+		icon.add_theme_font_size_override("font_size", 36)
 		icon.set_position(Vector2(x, y) + AIRCRAFT_ICON_OFFSET)
 		_aircraft_layer.add_child(icon)
 

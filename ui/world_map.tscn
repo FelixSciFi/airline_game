@@ -32,5 +32,5 @@ offset_top = 16.0
 offset_right = -16.0
 offset_bottom = 56.0
 grow_horizontal = 0
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 44
 text = "MENU"

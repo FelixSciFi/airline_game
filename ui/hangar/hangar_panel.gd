@@ -58,13 +58,13 @@ func _make_aircraft_row(ac: Dictionary) -> Control:
 
 	var info_label := Label.new()
 	info_label.text = "%s | %s | %s" % [ac_id, model_name, status]
-	info_label.add_theme_font_size_override("font_size", 14)
+	info_label.add_theme_font_size_override("font_size", 36)
 	info_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.add_child(info_label)
 
 	var deploy_btn := Button.new()
 	deploy_btn.text = "Deploy"
-	deploy_btn.add_theme_font_size_override("font_size", 14)
+	deploy_btn.add_theme_font_size_override("font_size", 44)
 	var can_deploy: bool = (status == "stored")
 	deploy_btn.disabled = !can_deploy
 	if can_deploy and _game_world != null:
@@ -73,7 +73,7 @@ func _make_aircraft_row(ac: Dictionary) -> Control:
 
 	var sell_btn := Button.new()
 	sell_btn.text = "卖出"
-	sell_btn.add_theme_font_size_override("font_size", 14)
+	sell_btn.add_theme_font_size_override("font_size", 44)
 	var can_sell: bool = (status == "stored")
 	sell_btn.disabled = !can_sell
 	if can_sell:
