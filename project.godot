@@ -17,14 +17,15 @@ config/icon="res://icon.svg"
 
 [display]
 
-window/size/viewport_width=1290
-window/size/viewport_height=2796
+window/size/viewport_width=2796
+window/size/viewport_height=1290
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
 [gui]
 
 theme/custom="res://ui/theme/game_theme.tres"
+theme/default_font_scale=2.0
 
 [physics]
 
@@ -33,3 +34,4 @@ theme/custom="res://ui/theme/game_theme.tres"
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+textures/vram_compression/import_etc2_astc=true

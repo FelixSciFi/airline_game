@@ -56,20 +56,20 @@ func _ready() -> void:
 	add_child(_deploy_hint_label)
 	_destination_hint_label = Label.new()
 	_destination_hint_label.name = "DestinationHintLabel"
-	_destination_hint_label.text = "选择目的地城市"
+	_destination_hint_label.text = "Select Destination City"
 	_destination_hint_label.add_theme_font_size_override("font_size", 36)
 	_destination_hint_label.visible = false
 	add_child(_destination_hint_label)
 	_destination_cancel_btn = Button.new()
 	_destination_cancel_btn.name = "DestinationCancelButton"
-	_destination_cancel_btn.text = "取消"
+	_destination_cancel_btn.text = "Cancel"
 	_destination_cancel_btn.add_theme_font_size_override("font_size", 44)
 	_destination_cancel_btn.visible = false
 	_destination_cancel_btn.pressed.connect(_on_destination_cancel_pressed)
 	add_child(_destination_cancel_btn)
 	_start_flight_btn = Button.new()
 	_start_flight_btn.name = "StartFlightButton"
-	_start_flight_btn.text = "起飞"
+	_start_flight_btn.text = "Depart"
 	_start_flight_btn.add_theme_font_size_override("font_size", 44)
 	_start_flight_btn.visible = false
 	_start_flight_btn.pressed.connect(_on_start_pressed)
@@ -277,7 +277,7 @@ func _on_request_deploy_mode(aircraft_id: String) -> void:
 	_hangar_panel.visible = false
 	_main_menu_panel.visible = false
 	if _deploy_hint_label != null:
-		_deploy_hint_label.text = "请选择部署城市：%s" % aircraft_id
+		_deploy_hint_label.text = "Select city to deploy: %s" % aircraft_id
 		_deploy_hint_label.visible = true
 		_deploy_hint_label.position = Vector2(20, 16)
 
@@ -311,6 +311,12 @@ func _on_city_pressed(city_id: String) -> void:
 	_airport_panel.visible = true
 
 func _input(event: InputEvent) -> void:
+	# iOS: forward screen touch/drag to map_view for two-finger pinch zoom
+	if _map_view != null:
+		if event is InputEventScreenTouch:
+			_map_view.process_screen_touch(event)
+		elif event is InputEventScreenDrag:
+			_map_view.process_screen_drag(event)
 	if _map_view == null:
 		return
 	# 鼠标滚轮
@@ -323,12 +329,16 @@ func _input(event: InputEvent) -> void:
 			elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 				_map_view.zoom_out()
 				print("WHEEL ZOOM: zoom=", _map_view.get_zoom())
-	# Mac 触控板双指缩放手势
-	elif event is InputEventMagnifyGesture:
+	# Mac 触控板双指缩放（独立分支，与 Pan 不互斥）
+	if event is InputEventMagnifyGesture:
 		var mg: InputEventMagnifyGesture = event
 		var factor: float = mg.factor
 		_map_view.zoom_by_factor(factor)
 		print("GESTURE ZOOM: factor=", factor, " zoom=", _map_view.get_zoom())
+	# Mac 触控板双指平移（独立分支；取反方向，倍率 2.0）
+	if event is InputEventPanGesture:
+		var pg: InputEventPanGesture = event
+		_map_view.pan_by_screen_delta(Vector2(-pg.delta.x, -pg.delta.y) * 2.0)
 
 func _on_map_view_changed() -> void:
 	_update_cities_screen_positions()

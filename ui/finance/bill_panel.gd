@@ -22,9 +22,9 @@ func _notification(what: int) -> void:
 func _refresh_display() -> void:
 	if _balance_label != null:
 		if _player_state != null:
-			_balance_label.text = "当前余额: %d" % _player_state.get_balance()
+			_balance_label.text = "Balance: %d" % _player_state.get_balance()
 		else:
-			_balance_label.text = "当前余额: --"
+			_balance_label.text = "Balance: --"
 	if _logs_container == null:
 		return
 	for child in _logs_container.get_children():

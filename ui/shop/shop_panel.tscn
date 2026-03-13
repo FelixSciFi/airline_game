@@ -43,14 +43,14 @@ theme_override_constants/separation = 24
 [node name="TitleLabel" type="Label" parent="MarginContainer/VBox/TopBar"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 60
-text = "飞机商城"
+text = "Aircraft Shop"
 vertical_alignment = 1
 
 [node name="BalanceLabel" type="Label" parent="MarginContainer/VBox/TopBar"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 36
-text = "当前余额: 100000"
+text = "Balance: 100000"
 vertical_alignment = 1
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBox"]
@@ -66,4 +66,4 @@ theme_override_constants/separation = 12
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 44
-text = "返回菜单"
+text = "Back to Menu"

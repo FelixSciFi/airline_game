@@ -29,7 +29,7 @@ func _update_title() -> void:
 			if str(c.get("id", "")) == _airport_city_id:
 				name_str = str(c.get("name", _airport_city_id))
 				break
-	_title_label.text = "机场：%s" % name_str
+	_title_label.text = "Airport: %s" % name_str
 
 func _ready() -> void:
 	$MarginContainer/VBox/BackButton.pressed.connect(_on_back_pressed)
@@ -77,13 +77,13 @@ func _make_aircraft_row(ac: Dictionary, player_state: Node) -> Control:
 	hbox.add_child(info_label)
 
 	var recall_btn := Button.new()
-	recall_btn.text = "送回机库"
+	recall_btn.text = "Recall to Hangar"
 	recall_btn.add_theme_font_size_override("font_size", 44)
 	recall_btn.pressed.connect(_on_recall_pressed.bind(ac_id))
 	hbox.add_child(recall_btn)
 
 	var depart_btn := Button.new()
-	depart_btn.text = "出发"
+	depart_btn.text = "Depart"
 	depart_btn.add_theme_font_size_override("font_size", 44)
 	depart_btn.pressed.connect(_on_depart_pressed.bind(ac_id))
 	hbox.add_child(depart_btn)

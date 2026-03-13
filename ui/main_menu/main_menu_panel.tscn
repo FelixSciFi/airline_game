@@ -36,29 +36,29 @@ alignment = 1
 [node name="MoneyLabel" type="Label" parent="CenterContainer/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
-text = "当前余额: 100000"
+text = "Balance: 100000"
 horizontal_alignment = 1
 
 [node name="ShopButton" type="Button" parent="CenterContainer/VBox"]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 44
-text = "飞机商城"
+text = "Aircraft Shop"
 
 [node name="HangarButton" type="Button" parent="CenterContainer/VBox"]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 44
-text = "机库"
+text = "Hangar"
 
 [node name="BillsButton" type="Button" parent="CenterContainer/VBox"]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 44
-text = "账单"
+text = "Bills"
 
 [node name="CloseButton" type="Button" parent="CenterContainer/VBox"]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 44
-text = "关闭菜单"
+text = "Close Menu"

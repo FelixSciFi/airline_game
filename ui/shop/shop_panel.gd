@@ -61,11 +61,11 @@ func _make_model_card(model: Dictionary) -> Control:
 
 	var price := int(model.get("price", 0))
 	var price_label := Label.new()
-	price_label.text = "价格: %d" % price
+	price_label.text = "Price: %d" % price
 	price_label.add_theme_font_size_override("font_size", 36)
 	vbox.add_child(price_label)
 
-	var stats := "速度:%d 容量:%d 航程:%d 油耗:%.1f" % [
+	var stats := "Speed:%d Capacity:%d Range:%d Fuel:%.1f" % [
 		int(model.get("speed", 0)),
 		int(model.get("capacity", 0)),
 		int(model.get("max_range", 0)),
@@ -77,7 +77,7 @@ func _make_model_card(model: Dictionary) -> Control:
 	vbox.add_child(stats_label)
 
 	var buy_btn := Button.new()
-	buy_btn.text = "购买"
+	buy_btn.text = "Buy"
 	buy_btn.add_theme_font_size_override("font_size", 44)
 	buy_btn.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	var model_id := str(model.get("id", ""))
@@ -97,9 +97,9 @@ func _refresh_balance() -> void:
 	if _balance_label == null:
 		return
 	if _player_state != null:
-		_balance_label.text = "当前余额: %d" % _player_state.get_balance()
+		_balance_label.text = "Balance: %d" % _player_state.get_balance()
 	else:
-		_balance_label.text = "当前余额: --"
+		_balance_label.text = "Balance: --"
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_VISIBILITY_CHANGED and visible:

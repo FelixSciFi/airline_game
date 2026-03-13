@@ -43,7 +43,7 @@ theme_override_constants/separation = 24
 [node name="TitleLabel" type="Label" parent="MarginContainer/VBox/TopBar"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 60
-text = "机场："
+text = "Airport: "
 vertical_alignment = 1
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBox"]
@@ -59,4 +59,4 @@ theme_override_constants/separation = 8
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 44
-text = "返回地图"
+text = "Back to Map"

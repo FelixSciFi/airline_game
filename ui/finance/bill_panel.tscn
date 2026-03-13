@@ -39,18 +39,18 @@ theme_override_constants/separation = 16
 [node name="TitleLabel" type="Label" parent="MarginContainer/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 60
-text = "账单"
+text = "Bills"
 horizontal_alignment = 1
 
 [node name="BalanceLabel" type="Label" parent="MarginContainer/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
-text = "当前余额: 100000"
+text = "Balance: 100000"
 
 [node name="LogsLabel" type="Label" parent="MarginContainer/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
-text = "明细"
+text = "Details"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
@@ -65,4 +65,4 @@ theme_override_constants/separation = 8
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 44
-text = "返回菜单"
+text = "Back to Menu"

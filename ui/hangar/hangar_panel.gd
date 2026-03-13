@@ -30,9 +30,9 @@ func _refresh_balance() -> void:
 	if _balance_label == null:
 		return
 	if _player_state != null:
-		_balance_label.text = "当前余额: %d" % _player_state.get_balance()
+		_balance_label.text = "Balance: %d" % _player_state.get_balance()
 	else:
-		_balance_label.text = "当前余额: --"
+		_balance_label.text = "Balance: --"
 
 func _refresh_aircraft_list() -> void:
 	if _aircraft_list == null:
@@ -58,7 +58,7 @@ func _make_aircraft_row(ac: Dictionary) -> Control:
 	var speed: int = _player_state.get_model_speed(model_id) if _player_state else 0
 
 	var info_label := Label.new()
-	info_label.text = "%s | %s | %s | 速度:%d" % [ac_id, model_name, status, speed]
+	info_label.text = "%s | %s | %s | Speed:%d" % [ac_id, model_name, status, speed]
 	info_label.add_theme_font_size_override("font_size", 36)
 	info_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.add_child(info_label)
@@ -73,7 +73,7 @@ func _make_aircraft_row(ac: Dictionary) -> Control:
 	hbox.add_child(deploy_btn)
 
 	var sell_btn := Button.new()
-	sell_btn.text = "卖出"
+	sell_btn.text = "Sell"
 	sell_btn.add_theme_font_size_override("font_size", 44)
 	var can_sell: bool = (status == "stored")
 	sell_btn.disabled = !can_sell

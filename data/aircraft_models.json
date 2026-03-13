@@ -1,7 +1,7 @@
 [
   {
     "id": "small_a",
-    "name": "小型客机 A",
+    "name": "Small Aircraft A",
     "price": 20000,
     "speed": 60,
     "capacity": 6,
@@ -10,7 +10,7 @@
   },
   {
     "id": "medium_b",
-    "name": "中型客机 B",
+    "name": "Medium Aircraft B",
     "price": 40000,
     "speed": 5,
     "capacity": 12,
@@ -19,7 +19,7 @@
   },
   {
     "id": "large_c",
-    "name": "大型客机 C",
+    "name": "Large Aircraft C",
     "price": 70000,
     "speed": 4,
     "capacity": 20,

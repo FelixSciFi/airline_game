@@ -31,9 +31,9 @@ func _refresh_balance() -> void:
 	if _money_label == null:
 		return
 	if _player_state != null:
-		_money_label.text = "当前余额: %d" % _player_state.get_balance()
+		_money_label.text = "Balance: %d" % _player_state.get_balance()
 	else:
-		_money_label.text = "当前余额: 100000"
+		_money_label.text = "Balance: 100000"
 
 func _on_bills_pressed() -> void:
 	open_bills.emit()

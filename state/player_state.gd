@@ -71,7 +71,7 @@ func purchase_aircraft(model_id: String, price: int) -> bool:
 		"status": AIRCRAFT_STATUS_STORED,
 		"current_city_id": null
 	})
-	add_finance_log(-price, "buy_aircraft", "购买飞机 %s %s" % [model_name, new_id])
+	add_finance_log(-price, "buy_aircraft", "Buy aircraft %s %s" % [model_name, new_id])
 	return true
 
 ## 卖出飞机：仅允许 stored；加款、删除实例、写入流水。
@@ -93,7 +93,7 @@ func sell_aircraft(aircraft_id: String) -> bool:
 	var sell_price := int(buy_price * SELL_RATIO)
 	balance += sell_price
 	aircraft_instances.remove_at(idx)
-	add_finance_log(sell_price, "sell_aircraft", "卖出飞机 %s %s" % [model_name, aircraft_id])
+	add_finance_log(sell_price, "sell_aircraft", "Sell aircraft %s %s" % [model_name, aircraft_id])
 	return true
 
 func _generate_aircraft_id() -> String:
