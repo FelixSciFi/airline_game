@@ -322,6 +322,9 @@ func _ready() -> void:
 	_static_map_layer.set_map_view(_map_view)
 	move_child(_static_map_layer, 0)
 	_map_view.view_changed.connect(_on_map_view_changed)
+	_sync_route_layer_transform()
+	_sync_aircraft_layer_transform()
+	_sync_city_layer_transform()
 	$ColorRect.visible = false
 	queue_redraw()
 	if _static_map_layer != null:
@@ -662,7 +665,40 @@ func _gui_input(event: InputEvent) -> void:
 			if hit_city_id != "":
 				_on_city_pressed(hit_city_id)
 
+func _sync_route_layer_transform() -> void:
+	if _route_layer == null or _map_view == null:
+		return
+	var view_size: Vector2 = _get_view_size()
+	var viewport_center: Vector2 = view_size / 2.0
+	var view_center: Vector2 = _map_view.get_view_center()
+	var z: float = _map_view.get_zoom()
+	_route_layer.position = viewport_center - view_center * z
+	_route_layer.scale = Vector2(z, z)
+
+func _sync_aircraft_layer_transform() -> void:
+	if _flying_aircraft_layer == null or _map_view == null:
+		return
+	var view_size: Vector2 = _get_view_size()
+	var viewport_center: Vector2 = view_size / 2.0
+	var view_center: Vector2 = _map_view.get_view_center()
+	var z: float = _map_view.get_zoom()
+	_flying_aircraft_layer.position = viewport_center - view_center * z
+	_flying_aircraft_layer.scale = Vector2(z, z)
+
+func _sync_city_layer_transform() -> void:
+	if _city_layer == null or _map_view == null:
+		return
+	var view_size: Vector2 = _get_view_size()
+	var viewport_center: Vector2 = view_size / 2.0
+	var view_center: Vector2 = _map_view.get_view_center()
+	var z: float = _map_view.get_zoom()
+	_city_layer.position = viewport_center - view_center * z
+	_city_layer.scale = Vector2(z, z)
+
 func _on_map_view_changed() -> void:
+	_sync_route_layer_transform()
+	_sync_aircraft_layer_transform()
+	_sync_city_layer_transform()
 	_update_aircraft_screen_positions()
 	queue_redraw()
 	if _static_map_layer != null:
