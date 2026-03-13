@@ -1,13 +1,22 @@
 extends Control
 
 const AircraftDeploySystem = preload("res://systems/aircraft_deploy_system.gd")
-const WORLD_MAP_TEXTURE := preload("res://assets/map/world_map_v1.png")
-const DOT_SIZE := 32
+const LAND_GEOJSON_PATH := "res://data/map/ne_110m_land.json"
+const LAKES_GEOJSON_PATH := "res://data/map/ne_110m_lakes.json"
+const RIVERS_GEOJSON_PATH := "res://data/map/ne_50m_rivers_lake_centerlines.json"
+const OCEAN_COLOR := Color(0.28, 0.45, 0.58, 1.0)
+const LAND_COLOR := Color(0.82, 0.78, 0.64, 1.0)
+const LAKE_COLOR := Color(0.42, 0.62, 0.88, 1.0)
 const LABEL_OFFSET := Vector2(12, -6)
 const AIRCRAFT_ICON_OFFSET := Vector2(-6, -6)
 const CITY_BUTTON_SIZE := 88
 const AIRCRAFT_STATUS_GROUNDED := "grounded"
 const DISTANCE_TIME_FACTOR := 1000.0
+const CITY_ICON_FILL := Color(0.88, 0.38, 0.22, 1.0)
+const CITY_ICON_STROKE := Color(1, 1, 1, 0.95)
+const CITY_ICON_STROKE_WIDTH := 1.2
+const CITY_ICON_RADIUS_CLAMP_MIN := 3.5
+const CITY_ICON_RADIUS_CLAMP_MAX := 12.0
 
 var _cities_layer: Node2D
 var _aircraft_layer: Node2D
@@ -28,6 +37,202 @@ var origin_city_id: String = ""
 var _destination_hint_label: Label = null
 var _destination_cancel_btn: Button = null
 var _start_flight_btn: Button = null
+# Natural Earth 陆地缓存：每个元素为世界坐标下的一个 polygon（PackedVector2Array），只解析一次
+var _land_polygons: Array = []
+var _land_loaded: bool = false
+# 50m 河流线缓存：每条为世界坐标点数组 PackedVector2Array，只解析一次
+var _river_lines: Array = []
+var _river_loaded: bool = false
+# 湖泊 polygon 缓存：每个元素为世界坐标 PackedVector2Array，只解析一次
+var _lake_polygons: Array = []
+var _lake_loaded: bool = false
+
+func _lon_lat_to_world(lon: float, lat: float, map_w: int, map_h: int) -> Vector2:
+	var world_x: float = (lon + 180.0) / 360.0 * float(map_w)
+	var world_y: float = (90.0 - lat) / 180.0 * float(map_h)
+	return Vector2(world_x, world_y)
+
+func _parse_ring_to_world(outer: Array, map_w: int, map_h: int) -> PackedVector2Array:
+	var ring: PackedVector2Array = []
+	for pt in outer:
+		if typeof(pt) != TYPE_ARRAY or pt.size() < 2:
+			continue
+		var lon: float = float(pt[0])
+		var lat: float = float(pt[1])
+		ring.append(_lon_lat_to_world(lon, lat, map_w, map_h))
+	return ring
+
+## 只执行一次：读取 GeoJSON，解析为世界坐标 polygon 并存入 _land_polygons。
+func _load_land_polygons() -> void:
+	if _land_loaded:
+		return
+	_land_polygons.clear()
+	if _map_view == null:
+		return
+	var map_w: int = _map_view.get_map_width()
+	var map_h: int = _map_view.get_map_height()
+	var file := FileAccess.open(LAND_GEOJSON_PATH, FileAccess.READ)
+	if file == null:
+		push_warning("Land GeoJSON not found: " + LAND_GEOJSON_PATH)
+		return
+	var json_text: String = file.get_as_text()
+	file.close()
+	var json := JSON.new()
+	var err: Error = json.parse(json_text)
+	if err != OK:
+		push_warning("Land GeoJSON parse error: " + json.get_error_message())
+		return
+	var data = json.get_data()
+	if data == null or typeof(data) != TYPE_DICTIONARY:
+		return
+	var features = data.get("features", [])
+	if typeof(features) != TYPE_ARRAY:
+		return
+	for feature in features:
+		if typeof(feature) != TYPE_DICTIONARY:
+			continue
+		var geom = feature.get("geometry", null)
+		if geom == null or typeof(geom) != TYPE_DICTIONARY:
+			continue
+		var gtype = geom.get("type", "")
+		var coords = geom.get("coordinates", null)
+		if coords == null or typeof(coords) != TYPE_ARRAY:
+			continue
+		if gtype == "Polygon":
+			var outer_ring = coords[0]
+			if typeof(outer_ring) != TYPE_ARRAY or outer_ring.is_empty():
+				continue
+			var ring: PackedVector2Array = _parse_ring_to_world(outer_ring, map_w, map_h)
+			if ring.size() >= 3:
+				_land_polygons.append(ring)
+		elif gtype == "MultiPolygon":
+			for poly in coords:
+				if typeof(poly) != TYPE_ARRAY or poly.is_empty():
+					continue
+				var outer_ring = poly[0]
+				if typeof(outer_ring) != TYPE_ARRAY or outer_ring.is_empty():
+					continue
+				var ring: PackedVector2Array = _parse_ring_to_world(outer_ring, map_w, map_h)
+				if ring.size() >= 3:
+					_land_polygons.append(ring)
+	_land_loaded = true
+	print("Land polygons cached: ", _land_polygons.size())
+
+func _parse_line_to_world(pts: Array, map_w: int, map_h: int) -> PackedVector2Array:
+	var line: PackedVector2Array = []
+	for pt in pts:
+		if typeof(pt) != TYPE_ARRAY or pt.size() < 2:
+			continue
+		var lon: float = float(pt[0])
+		var lat: float = float(pt[1])
+		line.append(_lon_lat_to_world(lon, lat, map_w, map_h))
+	return line
+
+## 只执行一次：读取河流 GeoJSON，解析为世界坐标线并存入 _river_lines。支持 LineString / MultiLineString。
+func _load_river_lines() -> void:
+	if _river_loaded:
+		return
+	_river_lines.clear()
+	if _map_view == null:
+		return
+	var map_w: int = _map_view.get_map_width()
+	var map_h: int = _map_view.get_map_height()
+	var file := FileAccess.open(RIVERS_GEOJSON_PATH, FileAccess.READ)
+	if file == null:
+		push_warning("Rivers GeoJSON not found: " + RIVERS_GEOJSON_PATH)
+		return
+	var json_text: String = file.get_as_text()
+	file.close()
+	var json := JSON.new()
+	var err: Error = json.parse(json_text)
+	if err != OK:
+		push_warning("Rivers GeoJSON parse error: " + json.get_error_message())
+		return
+	var data = json.get_data()
+	if data == null or typeof(data) != TYPE_DICTIONARY:
+		return
+	var features = data.get("features", [])
+	if typeof(features) != TYPE_ARRAY:
+		return
+	for feature in features:
+		if typeof(feature) != TYPE_DICTIONARY:
+			continue
+		var geom = feature.get("geometry", null)
+		if geom == null or typeof(geom) != TYPE_DICTIONARY:
+			continue
+		var gtype = geom.get("type", "")
+		var coords = geom.get("coordinates", null)
+		if coords == null or typeof(coords) != TYPE_ARRAY:
+			continue
+		if gtype == "LineString":
+			var line_pts: PackedVector2Array = _parse_line_to_world(coords, map_w, map_h)
+			if line_pts.size() >= 2:
+				_river_lines.append(line_pts)
+		elif gtype == "MultiLineString":
+			for segment in coords:
+				if typeof(segment) != TYPE_ARRAY or segment.size() < 2:
+					continue
+				var line_pts: PackedVector2Array = _parse_line_to_world(segment, map_w, map_h)
+				if line_pts.size() >= 2:
+					_river_lines.append(line_pts)
+	_river_loaded = true
+	print("River lines cached: ", _river_lines.size())
+
+## 只执行一次：读取湖泊 GeoJSON，解析为世界坐标 polygon 并存入 _lake_polygons。支持 Polygon / MultiPolygon。
+func _load_lake_polygons() -> void:
+	if _lake_loaded:
+		return
+	_lake_polygons.clear()
+	if _map_view == null:
+		return
+	var map_w: int = _map_view.get_map_width()
+	var map_h: int = _map_view.get_map_height()
+	var file := FileAccess.open(LAKES_GEOJSON_PATH, FileAccess.READ)
+	if file == null:
+		push_warning("Lakes GeoJSON not found: " + LAKES_GEOJSON_PATH)
+		return
+	var json_text: String = file.get_as_text()
+	file.close()
+	var json := JSON.new()
+	var err: Error = json.parse(json_text)
+	if err != OK:
+		push_warning("Lakes GeoJSON parse error: " + json.get_error_message())
+		return
+	var data = json.get_data()
+	if data == null or typeof(data) != TYPE_DICTIONARY:
+		return
+	var features = data.get("features", [])
+	if typeof(features) != TYPE_ARRAY:
+		return
+	for feature in features:
+		if typeof(feature) != TYPE_DICTIONARY:
+			continue
+		var geom = feature.get("geometry", null)
+		if geom == null or typeof(geom) != TYPE_DICTIONARY:
+			continue
+		var gtype = geom.get("type", "")
+		var coords = geom.get("coordinates", null)
+		if coords == null or typeof(coords) != TYPE_ARRAY:
+			continue
+		if gtype == "Polygon":
+			var outer_ring = coords[0]
+			if typeof(outer_ring) != TYPE_ARRAY or outer_ring.is_empty():
+				continue
+			var ring: PackedVector2Array = _parse_ring_to_world(outer_ring, map_w, map_h)
+			if ring.size() >= 3:
+				_lake_polygons.append(ring)
+		elif gtype == "MultiPolygon":
+			for poly in coords:
+				if typeof(poly) != TYPE_ARRAY or poly.is_empty():
+					continue
+				var outer_ring = poly[0]
+				if typeof(outer_ring) != TYPE_ARRAY or outer_ring.is_empty():
+					continue
+				var ring: PackedVector2Array = _parse_ring_to_world(outer_ring, map_w, map_h)
+				if ring.size() >= 3:
+					_lake_polygons.append(ring)
+	_lake_loaded = true
+	print("Lake polygons cached: ", _lake_polygons.size())
 
 func _get_active_flights() -> Array:
 	var parent := get_parent()
@@ -79,6 +284,9 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	set_offsets_preset(Control.PRESET_FULL_RECT)
 	call_deferred("_apply_viewport_size")
+	_load_land_polygons()
+	_load_lake_polygons()
+	_load_river_lines()
 
 func _apply_viewport_size() -> void:
 	var rect := get_viewport().get_visible_rect()
@@ -355,25 +563,40 @@ func _draw() -> void:
 	var map_h: int = _map_view.get_map_height()
 	# 地图外部：整屏浅灰
 	draw_rect(Rect2(Vector2.ZERO, view_size), Color(0.45, 0.45, 0.48, 1))
-	# 左右连续：三份副本 offset_x = -MAP_WIDTH, 0, +MAP_WIDTH
+	# Ocean：只画一次，覆盖整个可见区域，避免三副本导致的接缝竖线
+	draw_rect(Rect2(Vector2.ZERO, view_size), OCEAN_COLOR)
+	# Land：左右连续三份副本 offset_x = -MAP_WIDTH, 0, +MAP_WIDTH
 	var offsets_x: Array = [0.0, -float(map_w), float(map_w)]
 	for offset_x in offsets_x:
-		var corners: PackedVector2Array = [
-			_map_view.world_to_screen(Vector2(offset_x, 0), view_size),
-			_map_view.world_to_screen(Vector2(offset_x + map_w, 0), view_size),
-			_map_view.world_to_screen(Vector2(offset_x + map_w, map_h), view_size),
-			_map_view.world_to_screen(Vector2(offset_x, map_h), view_size)
-		]
-		# 地图内部：底图
-		if WORLD_MAP_TEXTURE != null:
-			var top_left: Vector2 = corners[0]
-			var bottom_right: Vector2 = corners[2]
-			draw_texture_rect(WORLD_MAP_TEXTURE, Rect2(top_left, bottom_right - top_left), false)
-		else:
-			draw_colored_polygon(corners, Color(0.35, 0.38, 0.42, 1))
-		# 地图边界：清晰边框
-		draw_polyline(corners, Color(1.0, 1.0, 1.0, 1.0))
-		draw_line(corners[3], corners[0], Color(1.0, 1.0, 1.0, 1.0))
+		for poly_world in _land_polygons:
+			var land_screen: PackedVector2Array = []
+			for p in poly_world:
+				land_screen.append(_map_view.world_to_screen(Vector2(p.x + offset_x, p.y), view_size))
+			if land_screen.size() >= 3:
+				draw_colored_polygon(land_screen, LAND_COLOR)
+		for poly_world in _lake_polygons:
+			var lake_screen: PackedVector2Array = []
+			for p in poly_world:
+				lake_screen.append(_map_view.world_to_screen(Vector2(p.x + offset_x, p.y), view_size))
+			if lake_screen.size() >= 3:
+				draw_colored_polygon(lake_screen, LAKE_COLOR)
+		for river in _river_lines:
+			var pts: PackedVector2Array = []
+			for p in river:
+				pts.append(_map_view.world_to_screen(Vector2(p.x + offset_x, p.y), view_size))
+			if pts.size() >= 2:
+				draw_polyline(pts, Color(0.45, 0.65, 0.9), 1.5)
+	# 城市图标：圆点分级 + 白描边，随 zoom 缩放
+	for offset_x in offsets_x:
+		for city in _cities:
+			var wx: float = float(city.get("x", 0))
+			var wy: float = float(city.get("y", 0))
+			var screen_pos: Vector2 = _map_view.world_to_screen(Vector2(wx + offset_x, wy), view_size)
+			var base_radius: float = _get_city_base_radius(city)
+			var radius: float = base_radius * _get_city_visual_scale()
+			radius = clampf(radius, CITY_ICON_RADIUS_CLAMP_MIN, CITY_ICON_RADIUS_CLAMP_MAX)
+			draw_circle(screen_pos, radius + CITY_ICON_STROKE_WIDTH, CITY_ICON_STROKE)
+			draw_circle(screen_pos, radius, CITY_ICON_FILL)
 	# 航线预览线：DESTINATION MODE 下 origin → selected（最短 wrap 路径）
 	if selecting_destination and origin_city_id != "" and selected_city_id != "":
 		var origin_world: Vector2 = _get_city_world_pos(origin_city_id)
@@ -467,7 +690,7 @@ func _draw() -> void:
 				var left: Vector2 = ps - dir_f * size * 0.3 + perp_f * size * 0.6
 				var right: Vector2 = ps - dir_f * size * 0.3 - perp_f * size * 0.6
 				var tri := PackedVector2Array([nose, left, right])
-				draw_colored_polygon(tri, Color(1, 1, 1, 1))
+				draw_colored_polygon(tri, Color(1, 1, 1, 0.95))
 		for f in to_complete:
 			_complete_flight(f)
 
@@ -506,6 +729,23 @@ func _get_city_world_pos(city_id: String) -> Vector2:
 func _get_view_size() -> Vector2:
 	return get_viewport().get_visible_rect().size
 
+func _get_city_visual_scale() -> float:
+	if _map_view == null:
+		return 1.0
+	return clampf(0.7 + 0.18 * _map_view.get_zoom(), 0.75, 1.6)
+
+func _get_city_base_radius(city: Dictionary) -> float:
+	var level: String = str(city.get("airport_level", city.get("base_level", "small")))
+	match level:
+		"huge":
+			return 7.0
+		"large":
+			return 6.0
+		"medium":
+			return 5.0
+		_:
+			return 4.0
+
 func set_cities(cities: Array) -> void:
 	_cities = cities
 	for child in _cities_layer.get_children():
@@ -523,11 +763,6 @@ func set_cities(cities: Array) -> void:
 		for offset_x in offsets_x:
 			var world_pos := Vector2(wx + offset_x, wy)
 			var screen: Vector2 = _map_view.world_to_screen(world_pos, view_size)
-			var dot := ColorRect.new()
-			dot.color = Color(0.9, 0.3, 0.2, 1)
-			dot.set_position(Vector2(screen.x - DOT_SIZE / 2.0, screen.y - DOT_SIZE / 2.0))
-			dot.set_size(Vector2(DOT_SIZE, DOT_SIZE))
-			_cities_layer.add_child(dot)
 			var label := Label.new()
 			label.text = name_str
 			label.add_theme_font_size_override("font_size", 36)
@@ -550,29 +785,14 @@ func _update_cities_screen_positions() -> void:
 	for city in _cities:
 		var wx: float = float(city.get("x", 0))
 		var wy: float = float(city.get("y", 0))
-		var city_id: String = str(city.get("id", ""))
-		var dot_radius: float = DOT_SIZE / 2.0
-		var dot_color := Color(0.9, 0.3, 0.2, 1)
-		if selecting_destination:
-			if city_id == selected_city_id:
-				dot_radius = 16.0
-				dot_color = Color.YELLOW
-			else:
-				dot_radius = 12.0
-				dot_color = Color.RED
-		var dot_size: float = dot_radius * 2.0
 		for offset_x in offsets_x:
 			var screen: Vector2 = _map_view.world_to_screen(Vector2(wx + offset_x, wy), view_size)
-			var dot := _cities_layer.get_child(idx)
-			var label := _cities_layer.get_child(idx + 1)
-			var btn := _cities_layer.get_child(idx + 2)
-			dot.color = dot_color
-			dot.set_size(Vector2(dot_size, dot_size))
-			dot.set_position(Vector2(screen.x - dot_radius, screen.y - dot_radius))
+			var label: Control = _cities_layer.get_child(idx)
+			var btn: Control = _cities_layer.get_child(idx + 1)
 			label.set_position(screen + LABEL_OFFSET)
 			btn.set_position(Vector2(screen.x - CITY_BUTTON_SIZE / 2.0, screen.y - CITY_BUTTON_SIZE / 2.0))
 			btn.set_size(Vector2(CITY_BUTTON_SIZE, CITY_BUTTON_SIZE))
-			idx += 3
+			idx += 2
 
 func set_aircraft(aircraft_instances: Array) -> void:
 	for child in _aircraft_layer.get_children():

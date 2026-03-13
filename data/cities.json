@@ -1,80 +1,1020 @@
 [
   {
-    "id": "chicago",
-    "name": "Chicago",
-    "region": "north_america",
-    "x": 1027,
-    "y": 535
-  },
-  {
-    "id": "new_york",
-    "name": "New York",
-    "region": "north_america",
-    "x": 1178,
-    "y": 548
-  },
-  {
     "id": "london",
     "name": "London",
-    "region": "western_europe",
+    "base_level": "large",
     "x": 1999,
     "y": 428
   },
   {
     "id": "paris",
     "name": "Paris",
-    "region": "western_europe",
+    "base_level": "large",
     "x": 2026,
     "y": 457
   },
   {
-    "id": "vienna",
-    "name": "Vienna",
-    "region": "eastern_europe",
-    "x": 2182,
-    "y": 464
+    "id": "amsterdam",
+    "name": "Amsterdam",
+    "base_level": "large",
+    "x": 2055,
+    "y": 418
+  },
+  {
+    "id": "istanbul",
+    "name": "Istanbul",
+    "base_level": "large",
+    "x": 2322,
+    "y": 544
   },
   {
     "id": "dubai",
     "name": "Dubai",
-    "region": "middle_east",
+    "base_level": "large",
     "x": 2614,
     "y": 720
   },
   {
-    "id": "baotou",
-    "name": "Baotou",
-    "region": "east_asia",
-    "x": 3220,
+    "id": "new_york",
+    "name": "New York",
+    "base_level": "large",
+    "x": 1178,
     "y": 548
   },
   {
-    "id": "beijing",
-    "name": "Beijing",
-    "region": "east_asia",
-    "x": 3293,
-    "y": 557
+    "id": "los_angeles",
+    "name": "Los Angeles",
+    "base_level": "large",
+    "x": 686,
+    "y": 622
+  },
+  {
+    "id": "chicago",
+    "name": "Chicago",
+    "base_level": "large",
+    "x": 1026,
+    "y": 535
+  },
+  {
+    "id": "atlanta",
+    "name": "Atlanta",
+    "base_level": "large",
+    "x": 1063,
+    "y": 625
   },
   {
     "id": "tokyo",
     "name": "Tokyo",
-    "region": "east_asia",
-    "x": 3552,
+    "base_level": "large",
+    "x": 3553,
     "y": 603
   },
   {
-    "id": "gibraltar",
-    "name": "Gibraltar",
-    "region": "western_europe",
-    "x": 1910,
-    "y": 660
+    "id": "seoul",
+    "name": "Seoul",
+    "base_level": "large",
+    "x": 3411,
+    "y": 583
+  },
+  {
+    "id": "beijing",
+    "name": "Beijing",
+    "base_level": "large",
+    "x": 3293,
+    "y": 557
+  },
+  {
+    "id": "shanghai",
+    "name": "Shanghai",
+    "base_level": "large",
+    "x": 3349,
+    "y": 653
+  },
+  {
+    "id": "hong_kong",
+    "name": "Hong Kong",
+    "base_level": "large",
+    "x": 3269,
+    "y": 752
+  },
+  {
+    "id": "singapore",
+    "name": "Singapore",
+    "base_level": "large",
+    "x": 3154,
+    "y": 986
+  },
+  {
+    "id": "madrid",
+    "name": "Madrid",
+    "base_level": "medium",
+    "x": 1959,
+    "y": 551
+  },
+  {
+    "id": "rome",
+    "name": "Rome",
+    "base_level": "medium",
+    "x": 2139,
+    "y": 534
+  },
+  {
+    "id": "vienna",
+    "name": "Vienna",
+    "base_level": "medium",
+    "x": 2182,
+    "y": 464
+  },
+  {
+    "id": "brussels",
+    "name": "Brussels",
+    "base_level": "medium",
+    "x": 2048,
+    "y": 435
+  },
+  {
+    "id": "stockholm",
+    "name": "Stockholm",
+    "base_level": "medium",
+    "x": 2201,
+    "y": 341
+  },
+  {
+    "id": "oslo",
+    "name": "Oslo",
+    "base_level": "medium",
+    "x": 2119,
+    "y": 334
+  },
+  {
+    "id": "dublin",
+    "name": "Dublin",
+    "base_level": "medium",
+    "x": 1930,
+    "y": 407
+  },
+  {
+    "id": "lisbon",
+    "name": "Lisbon",
+    "base_level": "medium",
+    "x": 1898,
+    "y": 570
+  },
+  {
+    "id": "warsaw",
+    "name": "Warsaw",
+    "base_level": "medium",
+    "x": 2233,
+    "y": 420
+  },
+  {
+    "id": "athens",
+    "name": "Athens",
+    "base_level": "medium",
+    "x": 2264,
+    "y": 578
+  },
+  {
+    "id": "doha",
+    "name": "Doha",
+    "base_level": "medium",
+    "x": 2573,
+    "y": 719
+  },
+  {
+    "id": "abu_dhabi",
+    "name": "Abu Dhabi",
+    "base_level": "medium",
+    "x": 2604,
+    "y": 728
+  },
+  {
+    "id": "cairo",
+    "name": "Cairo",
+    "base_level": "medium",
+    "x": 2347,
+    "y": 666
+  },
+  {
+    "id": "casablanca",
+    "name": "Casablanca",
+    "base_level": "medium",
+    "x": 1915,
+    "y": 627
+  },
+  {
+    "id": "johannesburg",
+    "name": "Johannesburg",
+    "base_level": "medium",
+    "x": 2311,
+    "y": 1291
+  },
+  {
+    "id": "addis_ababa",
+    "name": "Addis Ababa",
+    "base_level": "medium",
+    "x": 2430,
+    "y": 900
+  },
+  {
+    "id": "nairobi",
+    "name": "Nairobi",
+    "base_level": "medium",
+    "x": 2409,
+    "y": 1014
+  },
+  {
+    "id": "lagos",
+    "name": "Lagos",
+    "base_level": "medium",
+    "x": 2038,
+    "y": 928
+  },
+  {
+    "id": "delhi",
+    "name": "Delhi",
+    "base_level": "medium",
+    "x": 2858,
+    "y": 682
+  },
+  {
+    "id": "mumbai",
+    "name": "Mumbai",
+    "base_level": "medium",
+    "x": 2810,
+    "y": 788
+  },
+  {
+    "id": "jakarta",
+    "name": "Jakarta",
+    "base_level": "medium",
+    "x": 3187,
+    "y": 1069
+  },
+  {
+    "id": "manila",
+    "name": "Manila",
+    "base_level": "medium",
+    "x": 3344,
+    "y": 838
   },
   {
     "id": "taipei",
     "name": "Taipei",
-    "region": "east_asia",
-    "x": 3290,
-    "y": 780
+    "base_level": "medium",
+    "x": 3351,
+    "y": 722
+  },
+  {
+    "id": "chengdu",
+    "name": "Chengdu",
+    "base_level": "medium",
+    "x": 3156,
+    "y": 659
+  },
+  {
+    "id": "bangkok",
+    "name": "Bangkok",
+    "base_level": "medium",
+    "x": 3117,
+    "y": 847
+  },
+  {
+    "id": "sydney",
+    "name": "Sydney",
+    "base_level": "medium",
+    "x": 3680,
+    "y": 1376
+  },
+  {
+    "id": "melbourne",
+    "name": "Melbourne",
+    "base_level": "medium",
+    "x": 3611,
+    "y": 1420
+  },
+  {
+    "id": "toronto",
+    "name": "Toronto",
+    "base_level": "medium",
+    "x": 1118,
+    "y": 515
+  },
+  {
+    "id": "mexico_city",
+    "name": "Mexico City",
+    "base_level": "medium",
+    "x": 899,
+    "y": 784
+  },
+  {
+    "id": "prague",
+    "name": "Prague",
+    "base_level": "small",
+    "x": 2160,
+    "y": 443
+  },
+  {
+    "id": "budapest",
+    "name": "Budapest",
+    "base_level": "small",
+    "x": 2212,
+    "y": 472
+  },
+  {
+    "id": "bucharest",
+    "name": "Bucharest",
+    "base_level": "small",
+    "x": 2290,
+    "y": 506
+  },
+  {
+    "id": "helsinki",
+    "name": "Helsinki",
+    "base_level": "small",
+    "x": 2277,
+    "y": 332
+  },
+  {
+    "id": "luxembourg",
+    "name": "Luxembourg",
+    "base_level": "small",
+    "x": 2068,
+    "y": 449
+  },
+  {
+    "id": "tunis",
+    "name": "Tunis",
+    "base_level": "small",
+    "x": 2113,
+    "y": 591
+  },
+  {
+    "id": "algiers",
+    "name": "Algiers",
+    "base_level": "small",
+    "x": 2034,
+    "y": 591
+  },
+  {
+    "id": "tripoli",
+    "name": "Tripoli",
+    "base_level": "small",
+    "x": 2146,
+    "y": 635
+  },
+  {
+    "id": "khartoum",
+    "name": "Khartoum",
+    "base_level": "small",
+    "x": 2361,
+    "y": 827
+  },
+  {
+    "id": "kigali",
+    "name": "Kigali",
+    "base_level": "small",
+    "x": 2334,
+    "y": 1022
+  },
+  {
+    "id": "kampala",
+    "name": "Kampala",
+    "base_level": "small",
+    "x": 2362,
+    "y": 996
+  },
+  {
+    "id": "dar_es_salaam",
+    "name": "Dar es Salaam",
+    "base_level": "small",
+    "x": 2436,
+    "y": 1076
+  },
+  {
+    "id": "maputo",
+    "name": "Maputo",
+    "base_level": "small",
+    "x": 2362,
+    "y": 1288
+  },
+  {
+    "id": "windhoek",
+    "name": "Windhoek",
+    "base_level": "small",
+    "x": 2190,
+    "y": 1251
+  },
+  {
+    "id": "gaborone",
+    "name": "Gaborone",
+    "base_level": "small",
+    "x": 2288,
+    "y": 1274
+  },
+  {
+    "id": "harare",
+    "name": "Harare",
+    "base_level": "small",
+    "x": 2345,
+    "y": 1198
+  },
+  {
+    "id": "lusaka",
+    "name": "Lusaka",
+    "base_level": "small",
+    "x": 2314,
+    "y": 1171
+  },
+  {
+    "id": "antananarivo",
+    "name": "Antananarivo",
+    "base_level": "small",
+    "x": 2528,
+    "y": 1210
+  },
+  {
+    "id": "phnom_penh",
+    "name": "Phnom Penh",
+    "base_level": "small",
+    "x": 3166,
+    "y": 872
+  },
+  {
+    "id": "vientiane",
+    "name": "Vientiane",
+    "base_level": "small",
+    "x": 3140,
+    "y": 800
+  },
+  {
+    "id": "yangon",
+    "name": "Yangon",
+    "base_level": "small",
+    "x": 3068,
+    "y": 813
+  },
+  {
+    "id": "kathmandu",
+    "name": "Kathmandu",
+    "base_level": "small",
+    "x": 2948,
+    "y": 692
+  },
+  {
+    "id": "colombo",
+    "name": "Colombo",
+    "base_level": "small",
+    "x": 2887,
+    "y": 923
+  },
+  {
+    "id": "tashkent",
+    "name": "Tashkent",
+    "base_level": "small",
+    "x": 2770,
+    "y": 541
+  },
+  {
+    "id": "baku",
+    "name": "Baku",
+    "base_level": "small",
+    "x": 2554,
+    "y": 551
+  },
+  {
+    "id": "tbilisi",
+    "name": "Tbilisi",
+    "base_level": "small",
+    "x": 2498,
+    "y": 536
+  },
+  {
+    "id": "yerevan",
+    "name": "Yerevan",
+    "base_level": "small",
+    "x": 2495,
+    "y": 554
+  },
+  {
+    "id": "buenos_aires",
+    "name": "Buenos Aires",
+    "base_level": "medium",
+    "lon": -58.3816,
+    "lat": -34.6037,
+    "x": 1351,
+    "y": 1384
+  },
+  {
+    "id": "santiago",
+    "name": "Santiago",
+    "base_level": "medium",
+    "x": 1215,
+    "y": 1372
+  },
+  {
+    "id": "lima",
+    "name": "Lima",
+    "base_level": "medium",
+    "x": 1144,
+    "y": 1134
+  },
+  {
+    "id": "bogota",
+    "name": "Bogota",
+    "base_level": "medium",
+    "x": 1177,
+    "y": 949
+  },
+  {
+    "id": "rio_de_janeiro",
+    "name": "Rio de Janeiro",
+    "base_level": "small",
+    "x": 1520,
+    "y": 1255
+  },
+  {
+    "id": "montevideo",
+    "name": "Montevideo",
+    "base_level": "small",
+    "x": 1376,
+    "y": 1388
+  },
+  {
+    "id": "quito",
+    "name": "Quito",
+    "base_level": "small",
+    "x": 1128,
+    "y": 1002
+  },
+  {
+    "id": "la_paz",
+    "name": "La Paz",
+    "base_level": "small",
+    "x": 1243,
+    "y": 1183
+  },
+  {
+    "id": "kuala_lumpur",
+    "name": "Kuala Lumpur",
+    "base_level": "medium",
+    "x": 3130,
+    "y": 965
+  },
+  {
+    "id": "hanoi",
+    "name": "Hanoi",
+    "base_level": "medium",
+    "x": 3176,
+    "y": 766
+  },
+  {
+    "id": "abidjan",
+    "name": "Abidjan",
+    "base_level": "medium",
+    "x": 1955,
+    "y": 941
+  },
+  {
+    "id": "accra",
+    "name": "Accra",
+    "base_level": "medium",
+    "x": 1998,
+    "y": 938
+  },
+  {
+    "id": "dakar",
+    "name": "Dakar",
+    "base_level": "medium",
+    "x": 1806,
+    "y": 836
+  },
+  {
+    "id": "bamako",
+    "name": "Bamako",
+    "base_level": "small",
+    "x": 1911,
+    "y": 859
+  },
+  {
+    "id": "conakry",
+    "name": "Conakry",
+    "base_level": "small",
+    "x": 1848,
+    "y": 894
+  },
+  {
+    "id": "urumqi",
+    "name": "Ürümqi",
+    "base_level": "medium",
+    "x": 2973,
+    "y": 513
+  },
+  {
+    "id": "moscow",
+    "name": "Moscow",
+    "base_level": "medium",
+    "x": 2418,
+    "y": 381
+  },
+  {
+    "id": "auckland",
+    "name": "Auckland",
+    "base_level": "medium",
+    "x": 3942,
+    "y": 1409
+  },
+  {
+    "id": "wellington",
+    "name": "Wellington",
+    "base_level": "small",
+    "x": 3942,
+    "y": 1459
+  },
+  {
+    "id": "san_francisco",
+    "name": "San Francisco",
+    "base_level": "medium",
+    "x": 640,
+    "y": 580
+  },
+  {
+    "id": "miami",
+    "name": "Miami",
+    "base_level": "medium",
+    "x": 1109,
+    "y": 713
+  },
+  {
+    "id": "vancouver",
+    "name": "Vancouver",
+    "base_level": "medium",
+    "x": 632,
+    "y": 452
+  },
+  {
+    "id": "houston",
+    "name": "Houston",
+    "base_level": "small",
+    "x": 941,
+    "y": 670
+  },
+  {
+    "id": "tehran",
+    "name": "Tehran",
+    "base_level": "medium",
+    "x": 2571,
+    "y": 604
+  },
+  {
+    "id": "calgary",
+    "name": "Calgary",
+    "base_level": "small",
+    "lon": -114.0719,
+    "lat": 51.0447,
+    "x": 733,
+    "y": 433
+  },
+  {
+    "id": "ottawa",
+    "name": "Ottawa",
+    "base_level": "small",
+    "lon": -75.6972,
+    "lat": 45.4215,
+    "x": 1159,
+    "y": 495
+  },
+  {
+    "id": "edmonton",
+    "name": "Edmonton",
+    "base_level": "small",
+    "lon": -113.4909,
+    "lat": 53.5461,
+    "x": 739,
+    "y": 405
+  },
+  {
+    "id": "denver",
+    "name": "Denver",
+    "base_level": "small",
+    "lon": -104.9903,
+    "lat": 39.7392,
+    "x": 833,
+    "y": 558
+  },
+  {
+    "id": "phoenix",
+    "name": "Phoenix",
+    "base_level": "small",
+    "lon": -112.074,
+    "lat": 33.4484,
+    "x": 755,
+    "y": 628
+  },
+  {
+    "id": "minneapolis",
+    "name": "Minneapolis",
+    "base_level": "small",
+    "lon": -93.265,
+    "lat": 44.9778,
+    "x": 964,
+    "y": 500
+  },
+  {
+    "id": "kansas_city",
+    "name": "Kansas City",
+    "base_level": "small",
+    "lon": -94.5786,
+    "lat": 39.0997,
+    "x": 949,
+    "y": 566
+  },
+  {
+    "id": "guatemala_city",
+    "name": "Guatemala City",
+    "base_level": "small",
+    "lon": -90.5069,
+    "lat": 14.6349,
+    "x": 994,
+    "y": 837
+  },
+  {
+    "id": "panama_city",
+    "name": "Panama City",
+    "base_level": "medium",
+    "lon": -79.5199,
+    "lat": 8.9824,
+    "x": 1116,
+    "y": 900
+  },
+  {
+    "id": "san_jose",
+    "name": "San Jose",
+    "base_level": "small",
+    "lon": -84.0907,
+    "lat": 9.9281,
+    "x": 1066,
+    "y": 890
+  },
+  {
+    "id": "sao_paulo",
+    "name": "São Paulo",
+    "base_level": "medium",
+    "lon": -46.6333,
+    "lat": -23.5505,
+    "x": 1482,
+    "y": 1262
+  },
+  {
+    "id": "brasilia",
+    "name": "Brasilia",
+    "base_level": "small",
+    "lon": -47.8825,
+    "lat": -15.7942,
+    "x": 1468,
+    "y": 1175
+  },
+  {
+    "id": "fortaleza",
+    "name": "Fortaleza",
+    "base_level": "small",
+    "lon": -38.5267,
+    "lat": -3.7319,
+    "x": 1572,
+    "y": 1041
+  },
+  {
+    "id": "honolulu",
+    "name": "Honolulu",
+    "base_level": "medium",
+    "lon": -157.8583,
+    "lat": 21.3069,
+    "x": 246,
+    "y": 763
+  },
+  {
+    "id": "perth",
+    "name": "Perth",
+    "base_level": "medium",
+    "lon": 115.8605,
+    "lat": -31.9505,
+    "x": 3287,
+    "y": 1355
+  },
+  {
+    "id": "vladivostok",
+    "name": "Vladivostok",
+    "base_level": "medium",
+    "lon": 131.8855,
+    "lat": 43.1155,
+    "x": 3465,
+    "y": 521
+  },
+  {
+    "id": "novosibirsk",
+    "name": "Novosibirsk",
+    "base_level": "medium",
+    "lon": 82.9346,
+    "lat": 55.0084,
+    "x": 2921,
+    "y": 389
+  },
+  {
+    "id": "yekaterinburg",
+    "name": "Yekaterinburg",
+    "base_level": "small",
+    "lon": 60.5975,
+    "lat": 56.8389,
+    "x": 2673,
+    "y": 368
+  },
+  {
+    "id": "kinshasa",
+    "name": "Kinshasa",
+    "base_level": "medium",
+    "lon": 15.313026,
+    "lat": -4.3277782,
+    "x": 2170,
+    "y": 1048
+  },
+  {
+    "id": "douala",
+    "name": "Douala",
+    "base_level": "small",
+    "lon": 9.7043,
+    "lat": 4.0511,
+    "x": 2108,
+    "y": 955
+  },
+  {
+    "id": "luanda",
+    "name": "Luanda",
+    "base_level": "small",
+    "lon": 13.2324812,
+    "lat": -8.8363403,
+    "x": 2147,
+    "y": 1098
+  },
+  {
+    "id": "baotou",
+    "name": "Baotou",
+    "base_level": "small",
+    "lon": 109.8222,
+    "lat": 40.6522,
+    "x": 3218,
+    "y": 548
+  },
+  {
+    "id": "shenyang",
+    "name": "Shenyang",
+    "base_level": "medium",
+    "lon": 123.4315,
+    "lat": 41.8057,
+    "x": 3371,
+    "y": 535
+  },
+  {
+    "id": "wuhan",
+    "name": "Wuhan",
+    "base_level": "medium",
+    "lon": 114.3054,
+    "lat": 30.5931,
+    "x": 3270,
+    "y": 660
+  },
+  {
+    "id": "guangzhou",
+    "name": "Guangzhou",
+    "base_level": "medium",
+    "lon": 113.2644,
+    "lat": 23.1291,
+    "x": 3258,
+    "y": 743
+  },
+  {
+    "id": "harbin",
+    "name": "Harbin",
+    "base_level": "small",
+    "lon": 126.6424,
+    "lat": 45.7567,
+    "x": 3407,
+    "y": 492
+  },
+  {
+    "id": "hangzhou",
+    "name": "Hangzhou",
+    "base_level": "small",
+    "lon": 120.1551,
+    "lat": 30.2741,
+    "x": 3335,
+    "y": 664
+  },
+  {
+    "id": "qingdao",
+    "name": "Qingdao",
+    "base_level": "small",
+    "lon": 120.3826,
+    "lat": 36.0671,
+    "x": 3338,
+    "y": 599
+  },
+  {
+    "id": "osaka",
+    "name": "Osaka",
+    "base_level": "medium",
+    "lon": 135.5023,
+    "lat": 34.6937,
+    "x": 3506,
+    "y": 615
+  },
+  {
+    "id": "nagoya",
+    "name": "Nagoya",
+    "base_level": "small",
+    "lon": 136.9066,
+    "lat": 35.1815,
+    "x": 3521,
+    "y": 609
+  },
+  {
+    "id": "fukuoka",
+    "name": "Fukuoka",
+    "base_level": "small",
+    "lon": 130.4017,
+    "lat": 33.5902,
+    "x": 3449,
+    "y": 627
+  },
+  {
+    "id": "sapporo",
+    "name": "Sapporo",
+    "base_level": "small",
+    "lon": 141.3545,
+    "lat": 43.0618,
+    "x": 3571,
+    "y": 522
+  },
+  {
+    "id": "busan",
+    "name": "Busan",
+    "base_level": "medium",
+    "lon": 129.0756,
+    "lat": 35.1796,
+    "x": 3434,
+    "y": 609
+  },
+  {
+    "id": "anchorage",
+    "name": "Anchorage",
+    "base_level": "small",
+    "lon": -149.9003,
+    "lat": 61.2181,
+    "x": 334,
+    "y": 320
+  },
+  {
+    "id": "seattle",
+    "name": "Seattle",
+    "base_level": "small",
+    "lon": -122.3321,
+    "lat": 47.6062,
+    "x": 641,
+    "y": 470
+  },
+  {
+    "id": "dallas",
+    "name": "Dallas",
+    "base_level": "medium",
+    "lon": -96.7970,
+    "lat": 32.7767,
+    "x": 923,
+    "y": 636
+  },
+  {
+    "id": "montreal",
+    "name": "Montreal",
+    "base_level": "medium",
+    "lon": -73.5673,
+    "lat": 45.5017,
+    "x": 1183,
+    "y": 494
+  },
+  {
+    "id": "guadalajara",
+    "name": "Guadalajara",
+    "base_level": "small",
+    "lon": -103.3496,
+    "lat": 20.6597,
+    "x": 852,
+    "y": 769
+  },
+  {
+    "id": "monterrey",
+    "name": "Monterrey",
+    "base_level": "small",
+    "lon": -100.3161,
+    "lat": 25.6866,
+    "x": 884,
+    "y": 715
   }
 ]
-

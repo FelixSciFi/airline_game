@@ -11,7 +11,6 @@ const MAP_HEIGHT := 2000
 
 var view_center: Vector2 = Vector2(500, 350)
 var zoom: float = 1.0
-var min_zoom: float = 0.5
 var max_zoom: float = 5.0
 var _dragging := false
 # iOS pinch zoom: no MagnifyGesture, use two-finger distance
@@ -28,16 +27,14 @@ func _get_view_size() -> Vector2:
 		return Vector2(1280, 720)
 	return vp.get_visible_rect().size
 
-## 仅设定初始视角：根据当前 viewport 尺寸计算，使地图上下边不露出画框（横屏/竖屏通用）。
-## zoom 至少为 view_size.y/MAP_HEIGHT，view_center 水平与垂直居中。不限制后续拖动/缩放。
+## 初始视角：中心在欧亚中段 (lon=75, lat=38)，zoom 为最远视野的 1.3 倍。
 func _apply_initial_state() -> void:
 	var view_size: Vector2 = _get_view_size()
-	# 保证地图高度盖住屏幕：MAP_HEIGHT*zoom >= view_size.y => zoom >= view_size.y/MAP_HEIGHT
-	var min_zoom_to_cover: float = view_size.y / float(MAP_HEIGHT)
-	if zoom < min_zoom_to_cover:
-		zoom = min_zoom_to_cover
-	view_center.x = float(MAP_WIDTH) / 2.0
-	view_center.y = float(MAP_HEIGHT) / 2.0
+	# 初始中心：欧亚大陆中段 lon=75, lat=38 -> 世界坐标
+	view_center.x = (75.0 + 180.0) / 360.0 * float(MAP_WIDTH)
+	view_center.y = (90.0 - 38.0) / 180.0 * float(MAP_HEIGHT)
+	var min_allowed: float = _vertical_min_zoom(view_size)
+	zoom = min_allowed * 1.3
 	view_changed.emit()
 
 func _map_top_y(center_y: float, z: float, view_size: Vector2) -> float:
@@ -160,14 +157,16 @@ func pan_by_screen_delta(delta: Vector2) -> void:
 	_apply_view_center_bounds()
 	view_changed.emit()
 
+## 最小 zoom：横向最远只看到约 90°（世界 1/4 宽），且垂直不露黑边。
 func _vertical_min_zoom(view_size: Vector2) -> float:
+	var horizontal_min: float = view_size.x * 4.0 / float(MAP_WIDTH)
 	var frame_half: float = view_size.y / 2.0
 	var top_dist: float = maxf(view_center.y, 0.0001)
 	var bottom_dist: float = maxf(float(MAP_HEIGHT) - view_center.y, 0.0001)
 	var z_top: float = frame_half / top_dist
 	var z_bottom: float = frame_half / bottom_dist
-	var needed: float = maxf(z_top, z_bottom)
-	return maxf(min_zoom, needed)
+	var vertical_needed: float = maxf(z_top, z_bottom)
+	return maxf(horizontal_min, vertical_needed)
 
 func zoom_in() -> void:
 	var view_size: Vector2 = _get_view_size()
