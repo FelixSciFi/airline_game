@@ -7,9 +7,9 @@ const RIVERS_GEOJSON_PATH := "res://data/map/ne_50m_rivers_lake_centerlines.json
 const OCEAN_COLOR := Color(0.28, 0.45, 0.58, 1.0)
 const LAND_COLOR := Color(0.82, 0.78, 0.64, 1.0)
 const LAKE_COLOR := Color(0.42, 0.62, 0.88, 1.0)
-const LABEL_OFFSET := Vector2(12, -6)
 const AIRCRAFT_ICON_OFFSET := Vector2(-6, -6)
-const CITY_BUTTON_SIZE := 88
+const CITY_PICK_RADIUS_PADDING := 6.0
+const CITY_PICK_RADIUS_MIN := 10.0
 const AIRCRAFT_STATUS_GROUNDED := "grounded"
 const DISTANCE_TIME_FACTOR := 1000.0
 const CITY_ICON_FILL := Color(0.88, 0.38, 0.22, 1.0)
@@ -26,6 +26,7 @@ var _aircraft_layer: Node2D
 var _route_layer: Node2D
 var _flying_aircraft_layer: Node2D
 var _city_layer: Node2D
+var _static_map_layer: Node2D
 var _cities: Array = []
 var _map_view: Node = null
 var _player_state: Node = null
@@ -286,8 +287,20 @@ func get_city_base_radius(city: Dictionary) -> float:
 func get_city_visual_scale() -> float:
 	return _get_city_visual_scale()
 
+func get_land_polygons() -> Array:
+	return _land_polygons
+
+func get_lake_polygons() -> Array:
+	return _lake_polygons
+
+func get_river_lines() -> Array:
+	return _river_lines
+
 func _ready() -> void:
 	_cities_layer = $CitiesLayer
+	_static_map_layer = preload("res://ui/map/static_map_layer.gd").new()
+	_static_map_layer.name = "StaticMapLayer"
+	add_child(_static_map_layer)
 	_aircraft_layer = Node2D.new()
 	_aircraft_layer.name = "AircraftLayer"
 	add_child(_aircraft_layer)
@@ -306,9 +319,13 @@ func _ready() -> void:
 	_route_layer.set_map_view(_map_view)
 	_flying_aircraft_layer.set_map_view(_map_view)
 	_city_layer.set_map_view(_map_view)
+	_static_map_layer.set_map_view(_map_view)
+	move_child(_static_map_layer, 0)
 	_map_view.view_changed.connect(_on_map_view_changed)
 	$ColorRect.visible = false
 	queue_redraw()
+	if _static_map_layer != null:
+		_static_map_layer.queue_redraw()
 	_deploy_hint_label = Label.new()
 	_deploy_hint_label.name = "DeployHintLabel"
 	_deploy_hint_label.add_theme_font_size_override("font_size", 36)
@@ -453,8 +470,9 @@ func _on_start_pressed() -> void:
 		_destination_cancel_btn.visible = false
 	if _start_flight_btn != null:
 		_start_flight_btn.visible = false
-	_update_cities_screen_positions()
 	queue_redraw()
+	if _static_map_layer != null:
+		_static_map_layer.queue_redraw()
 	if _route_layer != null:
 		_route_layer.queue_redraw()
 	if _flying_aircraft_layer != null:
@@ -510,6 +528,8 @@ func enter_destination_select_mode(plane_id: String) -> void:
 				break
 	print("DESTINATION MODE: plane=", plane_id)
 	queue_redraw()
+	if _static_map_layer != null:
+		_static_map_layer.queue_redraw()
 	if _route_layer != null:
 		_route_layer.queue_redraw()
 	if _flying_aircraft_layer != null:
@@ -539,8 +559,9 @@ func _on_destination_cancel_pressed() -> void:
 		_destination_cancel_btn.visible = false
 	if _start_flight_btn != null:
 		_start_flight_btn.visible = false
-	_update_cities_screen_positions()
 	queue_redraw()
+	if _static_map_layer != null:
+		_static_map_layer.queue_redraw()
 	if _route_layer != null:
 		_route_layer.queue_redraw()
 	if _flying_aircraft_layer != null:
@@ -573,8 +594,9 @@ func _on_city_pressed(city_id: String) -> void:
 		else:
 			selected_city_id = city_id
 			print("DESTINATION SELECTED:", city_id)
-		_update_cities_screen_positions()
 		queue_redraw()
+		if _static_map_layer != null:
+			_static_map_layer.queue_redraw()
 		if _route_layer != null:
 			_route_layer.queue_redraw()
 		if _flying_aircraft_layer != null:
@@ -626,11 +648,25 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventPanGesture:
 		var pg: InputEventPanGesture = event
 		_map_view.pan_by_screen_delta(Vector2(-pg.delta.x, -pg.delta.y) * 2.0)
+	# 单指抬起时做城市命中检测（tap）
+	if event is InputEventScreenTouch and not event.pressed:
+		var hit_city_id: String = _pick_city_at_screen_pos(event.position)
+		if hit_city_id != "":
+			_on_city_pressed(hit_city_id)
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mb: InputEventMouseButton = event
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+			var hit_city_id: String = _pick_city_at_screen_pos(mb.position)
+			if hit_city_id != "":
+				_on_city_pressed(hit_city_id)
 
 func _on_map_view_changed() -> void:
-	_update_cities_screen_positions()
 	_update_aircraft_screen_positions()
 	queue_redraw()
+	if _static_map_layer != null:
+		_static_map_layer.queue_redraw()
 	if _route_layer != null:
 		_route_layer.queue_redraw()
 	if _flying_aircraft_layer != null:
@@ -641,69 +677,7 @@ func _on_map_view_changed() -> void:
 	print("MAP REFRESH WITH ZOOM: ", z)
 
 func _draw() -> void:
-	if _map_view == null:
-		return
-	var view_size: Vector2 = _get_view_size()
-	var map_w: int = _map_view.get_map_width()
-	var map_h: int = _map_view.get_map_height()
-	# 地图外部：整屏浅灰（screen 坐标取整，避免 iOS 拖动时边界抖）
-	var rect_screen := Rect2(Vector2.ZERO, view_size.round())
-	draw_rect(rect_screen, Color(0.45, 0.45, 0.48, 1))
-	# Ocean：只画一次，覆盖整个可见区域，避免三副本导致的接缝竖线
-	draw_rect(rect_screen, OCEAN_COLOR)
-	# 当前可见世界矩形（带 buffer，用于 land bbox 过滤）
-	var zoom: float = _map_view.get_zoom()
-	var view_center: Vector2 = _map_view.get_view_center()
-	var visible_world_width: float = view_size.x / zoom
-	var visible_world_height: float = view_size.y / zoom
-	var world_rect: Rect2 = Rect2(
-		Vector2(view_center.x - visible_world_width / 2.0, view_center.y - visible_world_height / 2.0),
-		Vector2(visible_world_width, visible_world_height)
-	)
-	world_rect = world_rect.grow(150.0)
-	# Land：左右连续三份副本 offset_x = -MAP_WIDTH, 0, +MAP_WIDTH，仅绘制与可见区域相交的 polygon
-	var offsets_x: Array = [0.0, -float(map_w), float(map_w)]
-	for offset_x in offsets_x:
-		for poly_world in _land_polygons:
-			var bbox: Rect2 = poly_world["bbox"]
-			var shifted_bbox: Rect2 = Rect2(bbox.position + Vector2(offset_x, 0), bbox.size)
-			if not shifted_bbox.intersects(world_rect):
-				continue
-			var land_screen: PackedVector2Array = []
-			for p in poly_world["points"]:
-				land_screen.append(_map_view.world_to_screen(Vector2(p.x + offset_x, p.y), view_size))
-			if land_screen.size() >= 3:
-				draw_colored_polygon(land_screen, LAND_COLOR)
-		for poly_world in _lake_polygons:
-			var bbox_lake: Rect2 = poly_world["bbox"]
-			var shifted_bbox_lake: Rect2 = Rect2(bbox_lake.position + Vector2(offset_x, 0), bbox_lake.size)
-			if not shifted_bbox_lake.intersects(world_rect):
-				continue
-			var lake_screen: PackedVector2Array = []
-			for p in poly_world["points"]:
-				lake_screen.append(_map_view.world_to_screen(Vector2(p.x + offset_x, p.y), view_size))
-			if lake_screen.size() >= 3:
-				draw_colored_polygon(lake_screen, LAKE_COLOR)
-		for river in _river_lines:
-			var bbox_river: Rect2 = river["bbox"]
-			var shifted_bbox_river: Rect2 = Rect2(bbox_river.position + Vector2(offset_x, 0), bbox_river.size)
-			if not shifted_bbox_river.intersects(world_rect):
-				continue
-			var zoom_river: float = _map_view.get_zoom()
-			var sr: int = int(river.get("scalerank", 99))
-			if sr <= 2:
-				pass
-			elif sr <= 4:
-				if zoom_river < RIVER_ZOOM_REGIONAL:
-					continue
-			else:
-				if zoom_river < RIVER_ZOOM_MINOR:
-					continue
-			var pts: PackedVector2Array = []
-			for p in river["points"]:
-				pts.append(_map_view.world_to_screen(Vector2(p.x + offset_x, p.y), view_size))
-			if pts.size() >= 2:
-				draw_polyline(pts, Color(0.45, 0.65, 0.9), 1.5)
+	pass
 
 func _complete_flight(flight: Dictionary) -> void:
 	var dest: String = str(flight.get("destination", ""))
@@ -719,6 +693,8 @@ func _complete_flight(flight: Dictionary) -> void:
 	if _player_state != null:
 		set_aircraft(_player_state.get_aircraft_instances())
 	queue_redraw()
+	if _static_map_layer != null:
+		_static_map_layer.queue_redraw()
 	if _route_layer != null:
 		_route_layer.queue_redraw()
 	if _flying_aircraft_layer != null:
@@ -746,6 +722,8 @@ func _process(_delta: float) -> void:
 		_complete_flight(f)
 	if _map_view != null and not _map_view.is_dragging():
 		queue_redraw()
+		if _static_map_layer != null:
+			_static_map_layer.queue_redraw()
 		if _route_layer != null:
 			_route_layer.queue_redraw()
 		if _flying_aircraft_layer != null:
@@ -789,43 +767,31 @@ func _get_city_base_radius(city: Dictionary) -> float:
 
 func set_cities(cities: Array) -> void:
 	_cities = cities
-	for child in _cities_layer.get_children():
-		child.queue_free()
-	if _map_view == null:
-		return
-	var view_size := _get_view_size()
+
+func _pick_city_at_screen_pos(screen_pos: Vector2) -> String:
+	if _map_view == null or _cities.is_empty():
+		return ""
+	var view_size: Vector2 = _get_view_size()
 	var map_w: int = _map_view.get_map_width()
 	var offsets_x: Array = [0.0, -float(map_w), float(map_w)]
-	for city in cities:
+	var best_id: String = ""
+	var best_dist: float = 1e30
+	for city in _cities:
 		var wx: float = float(city.get("x", 0))
 		var wy: float = float(city.get("y", 0))
 		var city_id: String = str(city.get("id", ""))
 		for offset_x in offsets_x:
-			var world_pos := Vector2(wx + offset_x, wy)
-			var screen: Vector2 = _map_view.world_to_screen(world_pos, view_size)
-			var btn := Button.new()
-			btn.flat = true
-			btn.set_position(Vector2(screen.x - CITY_BUTTON_SIZE / 2.0, screen.y - CITY_BUTTON_SIZE / 2.0).round())
-			btn.set_size(Vector2(CITY_BUTTON_SIZE, CITY_BUTTON_SIZE))
-			btn.pressed.connect(_on_city_pressed.bind(city_id))
-			_cities_layer.add_child(btn)
-
-func _update_cities_screen_positions() -> void:
-	if _map_view == null or _cities.is_empty():
-		return
-	var view_size := _get_view_size()
-	var map_w: int = _map_view.get_map_width()
-	var offsets_x: Array = [0.0, -float(map_w), float(map_w)]
-	var idx := 0
-	for city in _cities:
-		var wx: float = float(city.get("x", 0))
-		var wy: float = float(city.get("y", 0))
-		for offset_x in offsets_x:
-			var screen: Vector2 = _map_view.world_to_screen(Vector2(wx + offset_x, wy), view_size)
-			var btn: Control = _cities_layer.get_child(idx)
-			btn.set_position(Vector2(screen.x - CITY_BUTTON_SIZE / 2.0, screen.y - CITY_BUTTON_SIZE / 2.0).round())
-			btn.set_size(Vector2(CITY_BUTTON_SIZE, CITY_BUTTON_SIZE))
-			idx += 1
+			var center_screen: Vector2 = _map_view.world_to_screen(Vector2(wx + offset_x, wy), view_size)
+			var base_radius: float = _get_city_base_radius(city)
+			var visual_scale: float = _get_city_visual_scale()
+			var radius: float = base_radius * visual_scale
+			radius = clampf(radius, CITY_ICON_RADIUS_CLAMP_MIN, CITY_ICON_RADIUS_CLAMP_MAX)
+			var pick_radius: float = maxf(radius + CITY_PICK_RADIUS_PADDING, CITY_PICK_RADIUS_MIN)
+			var d: float = screen_pos.distance_to(center_screen)
+			if d <= pick_radius and d < best_dist:
+				best_dist = d
+				best_id = city_id
+	return best_id
 
 func set_aircraft(aircraft_instances: Array) -> void:
 	for child in _aircraft_layer.get_children():
