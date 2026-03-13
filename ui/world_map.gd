@@ -17,6 +17,9 @@ const CITY_ICON_STROKE := Color(1, 1, 1, 0.95)
 const CITY_ICON_STROKE_WIDTH := 1.2
 const CITY_ICON_RADIUS_CLAMP_MIN := 3.5
 const CITY_ICON_RADIUS_CLAMP_MAX := 12.0
+## 河流分级显示：zoom 低于阈值时不画该级。固定阈值（玩家 zoom 约 1.28～5.0）
+const RIVER_ZOOM_REGIONAL := 1.8
+const RIVER_ZOOM_MINOR := 2.6
 
 var _cities_layer: Node2D
 var _aircraft_layer: Node2D
@@ -51,6 +54,20 @@ func _lon_lat_to_world(lon: float, lat: float, map_w: int, map_h: int) -> Vector
 	var world_x: float = (lon + 180.0) / 360.0 * float(map_w)
 	var world_y: float = (90.0 - lat) / 180.0 * float(map_h)
 	return Vector2(world_x, world_y)
+
+func _compute_bbox(points: PackedVector2Array) -> Rect2:
+	if points.is_empty():
+		return Rect2(0, 0, 0, 0)
+	var min_x: float = points[0].x
+	var max_x: float = points[0].x
+	var min_y: float = points[0].y
+	var max_y: float = points[0].y
+	for i in range(1, points.size()):
+		min_x = minf(min_x, points[i].x)
+		max_x = maxf(max_x, points[i].x)
+		min_y = minf(min_y, points[i].y)
+		max_y = maxf(max_y, points[i].y)
+	return Rect2(Vector2(min_x, min_y), Vector2(max_x - min_x, max_y - min_y))
 
 func _parse_ring_to_world(outer: Array, map_w: int, map_h: int) -> PackedVector2Array:
 	var ring: PackedVector2Array = []
@@ -104,7 +121,7 @@ func _load_land_polygons() -> void:
 				continue
 			var ring: PackedVector2Array = _parse_ring_to_world(outer_ring, map_w, map_h)
 			if ring.size() >= 3:
-				_land_polygons.append(ring)
+				_land_polygons.append({"points": ring, "bbox": _compute_bbox(ring)})
 		elif gtype == "MultiPolygon":
 			for poly in coords:
 				if typeof(poly) != TYPE_ARRAY or poly.is_empty():
@@ -114,7 +131,7 @@ func _load_land_polygons() -> void:
 					continue
 				var ring: PackedVector2Array = _parse_ring_to_world(outer_ring, map_w, map_h)
 				if ring.size() >= 3:
-					_land_polygons.append(ring)
+					_land_polygons.append({"points": ring, "bbox": _compute_bbox(ring)})
 	_land_loaded = true
 	print("Land polygons cached: ", _land_polygons.size())
 
@@ -157,6 +174,11 @@ func _load_river_lines() -> void:
 	for feature in features:
 		if typeof(feature) != TYPE_DICTIONARY:
 			continue
+		var props = feature.get("properties", null)
+		if typeof(props) != TYPE_DICTIONARY:
+			continue
+		if str(props.get("featurecla", "")) != "River":
+			continue
 		var geom = feature.get("geometry", null)
 		if geom == null or typeof(geom) != TYPE_DICTIONARY:
 			continue
@@ -164,17 +186,18 @@ func _load_river_lines() -> void:
 		var coords = geom.get("coordinates", null)
 		if coords == null or typeof(coords) != TYPE_ARRAY:
 			continue
+		var scalerank: int = int(props.get("scalerank", 6))
 		if gtype == "LineString":
 			var line_pts: PackedVector2Array = _parse_line_to_world(coords, map_w, map_h)
 			if line_pts.size() >= 2:
-				_river_lines.append(line_pts)
+				_river_lines.append({"points": line_pts, "bbox": _compute_bbox(line_pts), "scalerank": scalerank})
 		elif gtype == "MultiLineString":
 			for segment in coords:
 				if typeof(segment) != TYPE_ARRAY or segment.size() < 2:
 					continue
 				var line_pts: PackedVector2Array = _parse_line_to_world(segment, map_w, map_h)
 				if line_pts.size() >= 2:
-					_river_lines.append(line_pts)
+					_river_lines.append({"points": line_pts, "bbox": _compute_bbox(line_pts), "scalerank": scalerank})
 	_river_loaded = true
 	print("River lines cached: ", _river_lines.size())
 
@@ -220,7 +243,7 @@ func _load_lake_polygons() -> void:
 				continue
 			var ring: PackedVector2Array = _parse_ring_to_world(outer_ring, map_w, map_h)
 			if ring.size() >= 3:
-				_lake_polygons.append(ring)
+				_lake_polygons.append({"points": ring, "bbox": _compute_bbox(ring)})
 		elif gtype == "MultiPolygon":
 			for poly in coords:
 				if typeof(poly) != TYPE_ARRAY or poly.is_empty():
@@ -230,7 +253,7 @@ func _load_lake_polygons() -> void:
 					continue
 				var ring: PackedVector2Array = _parse_ring_to_world(outer_ring, map_w, map_h)
 				if ring.size() >= 3:
-					_lake_polygons.append(ring)
+					_lake_polygons.append({"points": ring, "bbox": _compute_bbox(ring)})
 	_lake_loaded = true
 	print("Lake polygons cached: ", _lake_polygons.size())
 
@@ -565,24 +588,55 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, view_size), Color(0.45, 0.45, 0.48, 1))
 	# Ocean：只画一次，覆盖整个可见区域，避免三副本导致的接缝竖线
 	draw_rect(Rect2(Vector2.ZERO, view_size), OCEAN_COLOR)
-	# Land：左右连续三份副本 offset_x = -MAP_WIDTH, 0, +MAP_WIDTH
+	# 当前可见世界矩形（带 buffer，用于 land bbox 过滤）
+	var zoom: float = _map_view.get_zoom()
+	var view_center: Vector2 = _map_view.get_view_center()
+	var visible_world_width: float = view_size.x / zoom
+	var visible_world_height: float = view_size.y / zoom
+	var world_rect: Rect2 = Rect2(
+		Vector2(view_center.x - visible_world_width / 2.0, view_center.y - visible_world_height / 2.0),
+		Vector2(visible_world_width, visible_world_height)
+	)
+	world_rect = world_rect.grow(150.0)
+	# Land：左右连续三份副本 offset_x = -MAP_WIDTH, 0, +MAP_WIDTH，仅绘制与可见区域相交的 polygon
 	var offsets_x: Array = [0.0, -float(map_w), float(map_w)]
 	for offset_x in offsets_x:
 		for poly_world in _land_polygons:
+			var bbox: Rect2 = poly_world["bbox"]
+			var shifted_bbox: Rect2 = Rect2(bbox.position + Vector2(offset_x, 0), bbox.size)
+			if not shifted_bbox.intersects(world_rect):
+				continue
 			var land_screen: PackedVector2Array = []
-			for p in poly_world:
+			for p in poly_world["points"]:
 				land_screen.append(_map_view.world_to_screen(Vector2(p.x + offset_x, p.y), view_size))
 			if land_screen.size() >= 3:
 				draw_colored_polygon(land_screen, LAND_COLOR)
 		for poly_world in _lake_polygons:
+			var bbox_lake: Rect2 = poly_world["bbox"]
+			var shifted_bbox_lake: Rect2 = Rect2(bbox_lake.position + Vector2(offset_x, 0), bbox_lake.size)
+			if not shifted_bbox_lake.intersects(world_rect):
+				continue
 			var lake_screen: PackedVector2Array = []
-			for p in poly_world:
+			for p in poly_world["points"]:
 				lake_screen.append(_map_view.world_to_screen(Vector2(p.x + offset_x, p.y), view_size))
 			if lake_screen.size() >= 3:
 				draw_colored_polygon(lake_screen, LAKE_COLOR)
 		for river in _river_lines:
+			var bbox_river: Rect2 = river["bbox"]
+			var shifted_bbox_river: Rect2 = Rect2(bbox_river.position + Vector2(offset_x, 0), bbox_river.size)
+			if not shifted_bbox_river.intersects(world_rect):
+				continue
+			var sr: int = int(river.get("scalerank", 6))
+			if sr <= 2:
+				pass
+			elif sr <= 4:
+				if zoom < RIVER_ZOOM_REGIONAL:
+					continue
+			else:
+				if zoom < RIVER_ZOOM_MINOR:
+					continue
 			var pts: PackedVector2Array = []
-			for p in river:
+			for p in river["points"]:
 				pts.append(_map_view.world_to_screen(Vector2(p.x + offset_x, p.y), view_size))
 			if pts.size() >= 2:
 				draw_polyline(pts, Color(0.45, 0.65, 0.9), 1.5)
