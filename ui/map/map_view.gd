@@ -13,13 +13,26 @@ var view_center: Vector2 = Vector2(500, 350)
 var zoom: float = 1.0
 var max_zoom: float = 5.0
 var _dragging := false
+# Pan gesture end: stop "dragging" after no pan event for a short time so redraw runs once
+var _pan_end_timer: Timer
+
 # iOS pinch zoom: no MagnifyGesture, use two-finger distance
 var _touch_points: Dictionary = {}  # int index -> Vector2 position
 var _last_pinch_distance: float = -1.0
 var _last_pinch_center: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
+	_pan_end_timer = Timer.new()
+	_pan_end_timer.one_shot = true
+	_pan_end_timer.timeout.connect(_on_pan_end)
+	add_child(_pan_end_timer)
 	call_deferred("_apply_initial_state")
+
+func _on_pan_end() -> void:
+	_dragging = false
+
+func is_dragging() -> bool:
+	return _dragging
 
 func _get_view_size() -> Vector2:
 	var vp := get_viewport()
@@ -68,11 +81,13 @@ func process_screen_touch(event: InputEventScreenTouch) -> void:
 	if _touch_points.size() < 2:
 		_last_pinch_distance = -1.0
 		_last_pinch_center = Vector2.ZERO
+		_dragging = false
 
 ## iOS: process screen drag，基于旧/新两指状态一次性更新 zoom 与 view_center。
 func process_screen_drag(event: InputEventScreenDrag) -> void:
 	_touch_points[event.index] = event.position
 	if _touch_points.size() == 2:
+		_dragging = true
 		var keys: Array = _touch_points.keys()
 		var p1: Vector2 = _touch_points[keys[0]]
 		var p2: Vector2 = _touch_points[keys[1]]
@@ -153,6 +168,8 @@ func get_zoom() -> float:
 
 ## Pan by screen-space delta (e.g. Mac PanGesture). Uses delta/zoom, applies vertical bounds and X wrap.
 func pan_by_screen_delta(delta: Vector2) -> void:
+	_dragging = true
+	_pan_end_timer.start(0.15)
 	view_center -= delta / zoom
 	_apply_view_center_bounds()
 	view_changed.emit()
