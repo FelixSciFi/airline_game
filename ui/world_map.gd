@@ -26,6 +26,7 @@ var _aircraft_layer: Node2D
 var _route_layer: Node2D
 var _flying_aircraft_layer: Node2D
 var _city_layer: Node2D
+var _city_label_layer: Node2D
 var _static_map_layer: Node2D
 var _cities: Array = []
 var _map_view: Node = null
@@ -313,12 +314,16 @@ func _ready() -> void:
 	_city_layer = preload("res://ui/map/city_layer.gd").new()
 	_city_layer.name = "CityLayer"
 	add_child(_city_layer)
+	_city_label_layer = preload("res://ui/map/city_label_layer.gd").new()
+	_city_label_layer.name = "CityLabelLayer"
+	add_child(_city_label_layer)
 	_map_view = preload("res://ui/map/map_view.gd").new()
 	_map_view.name = "MapView"
 	add_child(_map_view)
 	_route_layer.set_map_view(_map_view)
 	_flying_aircraft_layer.set_map_view(_map_view)
 	_city_layer.set_map_view(_map_view)
+	_city_label_layer.set_map_view(_map_view)
 	_static_map_layer.set_map_view(_map_view)
 	move_child(_static_map_layer, 0)
 	_map_view.view_changed.connect(_on_map_view_changed)
@@ -482,6 +487,8 @@ func _on_start_pressed() -> void:
 		_flying_aircraft_layer.queue_redraw()
 	if _city_layer != null:
 		_city_layer.queue_redraw()
+	if _city_label_layer != null:
+		_city_label_layer.queue_redraw()
 
 func _on_menu_pressed() -> void:
 	_pending_deploy_aircraft_id = ""
@@ -539,6 +546,8 @@ func enter_destination_select_mode(plane_id: String) -> void:
 		_flying_aircraft_layer.queue_redraw()
 	if _city_layer != null:
 		_city_layer.queue_redraw()
+	if _city_label_layer != null:
+		_city_label_layer.queue_redraw()
 	if _destination_hint_label != null:
 		_destination_hint_label.visible = true
 		_destination_hint_label.position = Vector2(20, 70)
@@ -571,6 +580,8 @@ func _on_destination_cancel_pressed() -> void:
 		_flying_aircraft_layer.queue_redraw()
 	if _city_layer != null:
 		_city_layer.queue_redraw()
+	if _city_label_layer != null:
+		_city_label_layer.queue_redraw()
 	_airport_panel.visible = true
 
 func _on_aircraft_recalled() -> void:
@@ -606,6 +617,8 @@ func _on_city_pressed(city_id: String) -> void:
 			_flying_aircraft_layer.queue_redraw()
 		if _city_layer != null:
 			_city_layer.queue_redraw()
+		if _city_label_layer != null:
+			_city_label_layer.queue_redraw()
 		return
 	if not _pending_deploy_aircraft_id.is_empty():
 		# 部署模式：完成部署后自动打开该城市机场界面
@@ -651,11 +664,12 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventPanGesture:
 		var pg: InputEventPanGesture = event
 		_map_view.pan_by_screen_delta(Vector2(-pg.delta.x, -pg.delta.y) * 2.0)
-	# 单指抬起时做城市命中检测（tap）
+	# 单指抬起时做城市命中检测（仅当未发生明显拖动时，避免拖动结束误触城市）
 	if event is InputEventScreenTouch and not event.pressed:
-		var hit_city_id: String = _pick_city_at_screen_pos(event.position)
-		if hit_city_id != "":
-			_on_city_pressed(hit_city_id)
+		if _map_view.was_last_touch_tap():
+			var hit_city_id: String = _pick_city_at_screen_pos(event.position)
+			if hit_city_id != "":
+				_on_city_pressed(hit_city_id)
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -709,6 +723,8 @@ func _on_map_view_changed() -> void:
 		_flying_aircraft_layer.queue_redraw()
 	if _city_layer != null:
 		_city_layer.queue_redraw()
+	if _city_label_layer != null:
+		_city_label_layer.queue_redraw()
 	var z: float = _map_view.get_zoom() if _map_view != null else 1.0
 	print("MAP REFRESH WITH ZOOM: ", z)
 
@@ -737,6 +753,8 @@ func _complete_flight(flight: Dictionary) -> void:
 		_flying_aircraft_layer.queue_redraw()
 	if _city_layer != null:
 		_city_layer.queue_redraw()
+	if _city_label_layer != null:
+		_city_label_layer.queue_redraw()
 
 func _process(_delta: float) -> void:
 	var flights: Array = _get_active_flights()
@@ -766,6 +784,8 @@ func _process(_delta: float) -> void:
 			_flying_aircraft_layer.queue_redraw()
 		if _city_layer != null:
 			_city_layer.queue_redraw()
+		if _city_label_layer != null:
+			_city_label_layer.queue_redraw()
 
 func _get_plane_by_id(plane_id: String):
 	if _player_state == null:

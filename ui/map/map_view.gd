@@ -20,6 +20,10 @@ var _pan_end_timer: Timer
 var _touch_points: Dictionary = {}  # int index -> Vector2 position
 var _last_pinch_distance: float = -1.0
 var _last_pinch_center: Vector2 = Vector2.ZERO
+# Single-finger tap vs drag: if moved > threshold, treat as drag (no city tap on release)
+const _TOUCH_MOVE_THRESHOLD := 8.0
+var _touch_start_pos: Vector2 = Vector2.ZERO
+var _touch_moved_far: bool = false
 
 func _ready() -> void:
 	_pan_end_timer = Timer.new()
@@ -33,6 +37,10 @@ func _on_pan_end() -> void:
 
 func is_dragging() -> bool:
 	return _dragging
+
+## True if the last touch release was a tap (no significant move). Use to avoid city click after drag.
+func was_last_touch_tap() -> bool:
+	return not _touch_moved_far
 
 func _get_view_size() -> Vector2:
 	var vp := get_viewport()
@@ -76,6 +84,9 @@ func _has_multitouch() -> bool:
 func process_screen_touch(event: InputEventScreenTouch) -> void:
 	if event.pressed:
 		_touch_points[event.index] = event.position
+		if _touch_points.size() == 1:
+			_touch_start_pos = event.position
+			_touch_moved_far = false
 	else:
 		_touch_points.erase(event.index)
 	if _touch_points.size() < 2:
@@ -83,9 +94,17 @@ func process_screen_touch(event: InputEventScreenTouch) -> void:
 		_last_pinch_center = Vector2.ZERO
 		_dragging = false
 
-## iOS: process screen drag，基于旧/新两指状态一次性更新 zoom 与 view_center。
+## iOS: process screen drag，单指平移或双指 pinch。
 func process_screen_drag(event: InputEventScreenDrag) -> void:
 	_touch_points[event.index] = event.position
+	if _touch_points.size() == 1:
+		if _touch_start_pos.distance_to(event.position) > _TOUCH_MOVE_THRESHOLD:
+			_touch_moved_far = true
+		_dragging = true
+		view_center -= event.relative / zoom
+		_apply_view_center_bounds()
+		view_changed.emit()
+		return
 	if _touch_points.size() == 2:
 		_dragging = true
 		var keys: Array = _touch_points.keys()

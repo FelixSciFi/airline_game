@@ -8,6 +8,10 @@ func set_map_view(mv: Node) -> void:
 	_map_view = mv
 
 func _process(_delta: float) -> void:
+	if _map_view == null:
+		return
+	if _map_view.is_dragging():
+		return
 	var wm: Node = get_parent()
 	if wm == null or not wm.has_method("get_active_flights"):
 		return
