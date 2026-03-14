@@ -5,7 +5,7 @@ extends Node
 const INITIAL_BALANCE := 100000
 const AIRCRAFT_STATUS_STORED := "stored"
 const AIRCRAFT_STATUS_GROUNDED := "grounded"
-const AIRCRAFT_STATUS_IN_FLIGHT := "in_flight"
+const AIRCRAFT_STATUS_IN_FLIGHT := "flying"
 const ID_FORMAT := "plane_%03d"
 const AIRCRAFT_MODELS_PATH := "res://data/aircraft_models.json"
 const SELL_RATIO := 0.8
