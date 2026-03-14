@@ -461,9 +461,7 @@ func _on_start_pressed() -> void:
 		"origin": origin_city_id,
 		"destination": selected_city_id,
 		"start_time": Time.get_ticks_msec(),
-		"duration": duration_ms,
-		"started_at_unix": Time.get_unix_time_from_system(),
-		"arrival_at_unix": Time.get_unix_time_from_system() + int(duration_ms / 1000)
+		"duration": duration_ms
 	}
 	gs.active_flights.append(flight)
 	print("FLIGHT CREATED:", selecting_plane_id, " ", origin_city_id, " → ", selected_city_id)
@@ -491,9 +489,6 @@ func _on_start_pressed() -> void:
 		_city_layer.queue_redraw()
 	if _city_label_layer != null:
 		_city_label_layer.queue_redraw()
-	var main = get_parent()
-	if main != null and main.has_method("save_game"):
-		main.save_game()
 
 func _on_menu_pressed() -> void:
 	_pending_deploy_aircraft_id = ""
@@ -760,9 +755,6 @@ func _complete_flight(flight: Dictionary) -> void:
 		_city_layer.queue_redraw()
 	if _city_label_layer != null:
 		_city_label_layer.queue_redraw()
-	var main = get_parent()
-	if main != null and main.has_method("save_game"):
-		main.save_game()
 
 func _process(_delta: float) -> void:
 	var flights: Array = _get_active_flights()
